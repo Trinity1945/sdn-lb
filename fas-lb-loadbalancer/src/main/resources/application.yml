@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: fas-lb-loadbalancer
+server:
+  port: 9090
