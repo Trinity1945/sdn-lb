@@ -17,6 +17,42 @@
     </properties>
     <dependencies>
         <dependency>
+            <groupId>io.r2dbc</groupId>
+            <artifactId>r2dbc-pool</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>dev.miku</groupId>
+            <artifactId>r2dbc-mysql</artifactId>
+            <version>0.8.2.RELEASE</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-r2dbc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.zhangyh.FasLB</groupId>
             <artifactId>fas-lb-common</artifactId>
         </dependency>
@@ -27,13 +63,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

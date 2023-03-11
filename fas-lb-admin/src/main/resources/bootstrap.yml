@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: fas-lb-admin
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: c6adca62-4ea0-436a-8df3-690d80b1f1d5
+        group: fas-lb
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        namespace: ${spring.cloud.nacos.discovery.namespace}
+        file-extension: yaml
+        group: ${spring.cloud.nacos.discovery.group}
+

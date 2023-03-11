@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhang.faslbadmin.admin.mapper.UserMapper">
+    <resultMap id="BaseResultMap" type="com.zhang.faslbadmin.admin.model.po.User">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="userAccount" column="userAccount" jdbcType="VARCHAR"/>
+        <result property="username" column="userName" jdbcType="VARCHAR"/>
+        <result property="password" column="password" jdbcType="VARCHAR"/>
+        <result property="state" column="state" jdbcType="INTEGER"/>
+        <result property="email" column="email" jdbcType="VARCHAR"/>
+        <result property="phoneNumber" column="phoneNumber" jdbcType="VARCHAR"/>
+        <result property="ipv4" column="ipv4" jdbcType="VARCHAR"/>
+        <result property="ipv6" column="ipv6" jdbcType="VARCHAR"/>
+        <result property="gender" column="gender" jdbcType="VARCHAR"/>
+        <result property="avatar" column="avatar" jdbcType="VARCHAR"/>
+        <result property="usertype" column="userType" jdbcType="VARCHAR"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+        <result property="isDelete" column="isDelete" jdbcType="INTEGER"/>
+    </resultMap>
+
+<!--    <sql id="Base_Column_List">-->
+<!--        id,userAccount,username,-->
+<!--        password,status,email,-->
+<!--        phoneNumber,ipv4,ipv6,-->
+<!--        sex,avatar,userType,-->
+<!--        createTime,updateTime,isDelete-->
+<!--    </sql>-->
+</mapper>

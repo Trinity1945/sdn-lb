@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhangyh.logging.admin.mapper.LogMapper">
+    <resultMap id="BaseResultMap" type="com.zhangyh.logging.admin.model.po.Log">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="username" column="userAccount" jdbcType="VARCHAR"/>
+        <result property="description" column="userName" jdbcType="VARCHAR"/>
+        <result property="method" column="password" jdbcType="VARCHAR"/>
+        <result property="params" column="state" jdbcType="INTEGER"/>
+        <result property="logType" column="email" jdbcType="VARCHAR"/>
+        <result property="requestIp" column="phoneNumber" jdbcType="VARCHAR"/>
+        <result property="address" column="ipv4" jdbcType="VARCHAR"/>
+        <result property="browser" column="ipv6" jdbcType="VARCHAR"/>
+        <result property="time" column="gender" jdbcType="VARCHAR"/>
+        <result property="exceptionDetail" column="avatar" jdbcType="VARCHAR"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+</mapper>

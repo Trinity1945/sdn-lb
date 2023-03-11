@@ -1,5 +1,0 @@
-spring:
-  application:
-    name: fas-lb-gateway
-server:
-  port: 8181

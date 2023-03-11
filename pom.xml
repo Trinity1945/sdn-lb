@@ -35,7 +35,7 @@
         <hibernate-validator.version>6.1.6.Final</hibernate-validator.version>
         <fas.lb.common.version>1.0-SNAPSHOT</fas.lb.common.version>
         <fas.lb.security.version>1.0-SNAPSHOT</fas.lb.security.version>
-        <spring-cloud.version>2021.0.4</spring-cloud.version>
+        <spring-cloud.version>2021.0.5</spring-cloud.version>
         <spring.cloud.alibaba.version>2.2.9.RELEASE</spring.cloud.alibaba.version>
     </properties>
 
