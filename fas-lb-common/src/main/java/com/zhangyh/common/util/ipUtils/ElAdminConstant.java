@@ -1,4 +1,4 @@
-package com.zhangyh.logging.common.util;
+package com.zhangyh.common.util.ipUtils;
 
 /**
  * @Author: zhangyh

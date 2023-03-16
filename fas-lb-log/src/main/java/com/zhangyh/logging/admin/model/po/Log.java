@@ -16,7 +16,7 @@ import java.sql.Timestamp;
 @Entity
 @Getter
 @Setter
-@Table(name = "sys_log")
+@Table(name = "fas_log")
 @NoArgsConstructor
 public class Log  implements Serializable {
 
@@ -26,36 +26,47 @@ public class Log  implements Serializable {
     private Long id;
 
     /** 操作用户 */
-    private String username;
+    @Column(name = "userAccount")
+    private String userAccount;
 
     /** 描述 */
+    @Column(name = "description")
     private String description;
 
     /** 方法名 */
+    @Column(name = "method")
     private String method;
 
     /** 参数 */
+    @Column(name = "params")
     private String params;
 
     /** 日志类型 */
+    @Column(name = "log_type")
     private String logType;
 
     /** 请求ip */
+    @Column(name = "request_ip")
     private String requestIp;
 
     /** 地址 */
+    @Column(name = "address")
     private String address;
 
     /** 浏览器  */
+    @Column(name = "browser")
     private String browser;
 
     /** 请求耗时 */
+    @Column(name = "time")
     private Long time;
 
     /** 异常详细  */
+    @Column(name = "exception_detail")
     private byte[] exceptionDetail;
 
     /** 创建日期 */
+    @Column(name = "create_time")
     private Timestamp createTime;
 
     public Log(String logType, Long time) {

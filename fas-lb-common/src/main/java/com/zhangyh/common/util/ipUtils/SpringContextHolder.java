@@ -1,4 +1,4 @@
-package com.zhangyh.logging.common.util;
+package com.zhangyh.common.util.ipUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;

@@ -1,4 +1,4 @@
-package com.zhangyh.logging.common.config;
+package com.zhangyh.common.util.ipUtils;
 
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;

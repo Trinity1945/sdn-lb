@@ -1,10 +1,9 @@
-package com.zhangyh.logging.common.util;
+package com.zhangyh.common.util.ipUtils;
 
 
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.zhangyh.logging.common.config.ElAdminProperties;
 import lombok.extern.slf4j.Slf4j;
 import net.dreamlu.mica.ip2region.core.Ip2regionSearcher;
 import net.dreamlu.mica.ip2region.core.IpInfo;

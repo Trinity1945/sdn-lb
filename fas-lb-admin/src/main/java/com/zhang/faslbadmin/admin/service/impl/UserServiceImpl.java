@@ -2,7 +2,7 @@ package com.zhang.faslbadmin.admin.service.impl;
 
 import com.zhang.faslbadmin.admin.mapper.UserMapper;
 import com.zhang.faslbadmin.admin.model.bo.AdminUserDetails;
-import com.zhang.faslbadmin.admin.model.po.User;
+import com.zhang.faslbadmin.admin.model.po.FasUser;
 import com.zhang.faslbadmin.admin.service.UserService;
 import com.zhangyh.common.exception.Asserts;
 import com.zhangyh.common.exception.BusinessException;
@@ -83,7 +83,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDetails loadUserByUserAccount(String userAccount) {
-        User admin = getAdminByUserAccount(userAccount);
+        FasUser admin = getAdminByUserAccount(userAccount);
         if (Optional.ofNullable(admin).isPresent()) {
             return new AdminUserDetails(admin);
         }
@@ -91,9 +91,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getAdminByUserAccount(String userAccount) {
+    public FasUser getAdminByUserAccount(String userAccount) {
         //查数据库用户信息
-        final Example example = new Example(User.class);
+        final Example example = new Example(FasUser.class);
         example.createCriteria().andEqualTo("userAccount",userAccount);
         return userMapper.selectOneByExample(example);
     }

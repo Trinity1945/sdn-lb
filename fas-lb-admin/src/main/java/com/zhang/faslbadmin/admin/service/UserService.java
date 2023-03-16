@@ -1,6 +1,6 @@
 package com.zhang.faslbadmin.admin.service;
 
-import com.zhang.faslbadmin.admin.model.po.User;
+import com.zhang.faslbadmin.admin.model.po.FasUser;
 import org.springframework.security.core.userdetails.UserDetails;
 
 /**
@@ -30,5 +30,7 @@ public interface UserService {
      * @param userAccount 账号
      * @return User
      */
-    public User getAdminByUserAccount(String userAccount);
+     FasUser getAdminByUserAccount(String userAccount);
+
+
 }
