@@ -1,8 +1,11 @@
 package com.zhang.faslbadmin.admin.service.impl;
 
-import com.zhang.faslbadmin.admin.mapper.UserMapper;
+import com.github.pagehelper.PageHelper;
+import com.zhang.faslbadmin.admin.mapper.FasUserAccountMapper;
 import com.zhang.faslbadmin.admin.model.bo.AdminUserDetails;
-import com.zhang.faslbadmin.admin.model.po.FasUser;
+import com.zhang.faslbadmin.admin.model.dto.FasUserQueryDto;
+import com.zhang.faslbadmin.admin.model.po.FasUserAccount;
+import com.zhang.faslbadmin.admin.model.vo.PageInfo;
 import com.zhang.faslbadmin.admin.service.UserService;
 import com.zhangyh.common.exception.Asserts;
 import com.zhangyh.common.exception.BusinessException;
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Service;
 import tk.mybatis.mapper.entity.Example;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,7 +40,7 @@ public class UserServiceImpl implements UserService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Resource
-    UserMapper userMapper;
+    FasUserAccountMapper userMapper;
 
     @Lazy
     @Resource
@@ -82,8 +86,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDetails loadUserByUserAccount(String userAccount) {
-        FasUser admin = getAdminByUserAccount(userAccount);
+    public UserDetails loadUserByUserAccount(String username) {
+        FasUserAccount admin = getAdminByUserAccount(username);
         if (Optional.ofNullable(admin).isPresent()) {
             return new AdminUserDetails(admin);
         }
@@ -91,10 +95,35 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public FasUser getAdminByUserAccount(String userAccount) {
+    public FasUserAccount getAdminByUserAccount(String username) {
         //查数据库用户信息
-        final Example example = new Example(FasUser.class);
-        example.createCriteria().andEqualTo("userAccount",userAccount);
+        final Example example = new Example(FasUserAccount.class);
+        example.createCriteria().andEqualTo("username",username);
         return userMapper.selectOneByExample(example);
     }
+
+    @Override
+    public List<FasUserAccount> listAll() {
+        return userMapper.selectAll();
+    }
+
+    @Override
+    public PageInfo<FasUserAccount> pageList(FasUserQueryDto userQueryDto) {
+        if(userQueryDto.getLimit()==null){
+            userQueryDto.setLimit(1);
+        }
+        if(userQueryDto.getPage()==null){
+            userQueryDto.setPage(10);
+        }
+        PageHelper.startPage(userQueryDto.getLimit(), userQueryDto.getPage());
+         List<FasUserAccount> fasUsers = userMapper.selectAllAccount(userQueryDto);
+         com.github.pagehelper.PageInfo<FasUserAccount> pageInfo = new com.github.pagehelper.PageInfo<>(fasUsers);
+         PageInfo<FasUserAccount> userPage = new PageInfo<>();
+        userPage.setPage(pageInfo.getPages());
+        userPage.setData(fasUsers);
+        userPage.setTotal(pageInfo.getTotal());
+        return userPage;
+    }
+
+
 }

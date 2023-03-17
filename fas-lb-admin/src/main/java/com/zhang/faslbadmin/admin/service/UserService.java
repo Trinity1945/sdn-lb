@@ -1,7 +1,11 @@
 package com.zhang.faslbadmin.admin.service;
 
-import com.zhang.faslbadmin.admin.model.po.FasUser;
+import com.zhang.faslbadmin.admin.model.dto.FasUserQueryDto;
+import com.zhang.faslbadmin.admin.model.po.FasUserAccount;
+import com.zhang.faslbadmin.admin.model.vo.PageInfo;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.List;
 
 /**
  * @Author: zhangyh
@@ -30,7 +34,19 @@ public interface UserService {
      * @param userAccount 账号
      * @return User
      */
-     FasUser getAdminByUserAccount(String userAccount);
+     FasUserAccount getAdminByUserAccount(String userAccount);
 
+    /**
+     * 查询所有用户
+     * @return /
+     */
+     List<FasUserAccount> listAll();
+
+    /**
+     * 账号信息分页查询
+     * @param userQueryDto /
+     * @return /
+     */
+     PageInfo<FasUserAccount> pageList(FasUserQueryDto userQueryDto);
 
 }

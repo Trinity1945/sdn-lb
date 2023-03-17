@@ -1,6 +1,6 @@
 package com.zhang.faslbadmin.admin.model.bo;
 
-import com.zhang.faslbadmin.admin.model.po.FasUser;
+import com.zhang.faslbadmin.admin.model.po.FasUserAccount;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -16,9 +16,9 @@ public class AdminUserDetails implements UserDetails {
     /**
      * 后台用户
      */
-    private final FasUser user;
+    private final FasUserAccount user;
 
-    public AdminUserDetails(FasUser fasUser) {
+    public AdminUserDetails(FasUserAccount fasUser) {
         this.user = fasUser;
     }
 
@@ -34,7 +34,7 @@ public class AdminUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getUserAccount();
+        return user.getUsername();
     }
 
     @Override

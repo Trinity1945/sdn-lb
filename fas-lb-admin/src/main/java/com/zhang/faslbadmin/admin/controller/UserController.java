@@ -1,6 +1,9 @@
 package com.zhang.faslbadmin.admin.controller;
 
+import com.zhang.faslbadmin.admin.model.dto.FasUserQueryDto;
 import com.zhang.faslbadmin.admin.model.dto.UserDto;
+import com.zhang.faslbadmin.admin.model.po.FasUserAccount;
+import com.zhang.faslbadmin.admin.model.vo.PageInfo;
 import com.zhang.faslbadmin.admin.service.UserService;
 import com.zhang.faslbadmin.common.util.RequestHolder;
 import com.zhang.faslbadmin.common.valid.LoginGroup;
@@ -68,5 +71,10 @@ public class UserController {
         log.info("localIp:{}--weekDay:{}--browser:{}--ip:{}--cityInfo:{}--localCityInfo:{}",localIp,weekDay,browser,ip,cityInfo,localCityInfo);
 
         return "success";
+    }
+
+    @PostMapping("/pageList")
+    public PageInfo<FasUserAccount> pageList(@RequestBody FasUserQueryDto fasUserQueryDto){
+     return   userService.pageList(fasUserQueryDto);
     }
 }
