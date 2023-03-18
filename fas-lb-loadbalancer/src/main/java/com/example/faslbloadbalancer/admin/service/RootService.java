@@ -1,23 +1,24 @@
-package com.example.faslbloadbalancer.common.util.valid;
+package com.example.faslbloadbalancer.admin.service;
 
 import com.zhangyh.common.exception.BusinessException;
 import com.zhangyh.common.exception.ErrorCode;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-import javax.annotation.Resource;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * @Author: zhangyh
  * @desc
- * @date: 2023/3/10  22:20
+ * @date: 2023/3/18  10:03
  */
-public class Validator {
-    @Resource
-    LocalValidatorFactoryBean validator;
+public interface RootService {
 
     /**
      * 参数校验
@@ -26,7 +27,7 @@ public class Validator {
      * @param throwException 是否抛出异常
      * @return -
      */
-    protected List<ArgumentInvalidResult> validate(Object params, Boolean throwException) {
+    default List<ArgumentInvalidResult> validate( LocalValidatorFactoryBean validator,Object params, Boolean throwException) {
         Errors errors = new BeanPropertyBindingResult(params, "params");
         validator.validate(params, errors);
         if (!errors.hasErrors()) {
@@ -42,5 +43,17 @@ public class Validator {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, errorList.toString());
         }
         return errorList;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    class ArgumentInvalidResult {
+
+        private String field;
+        private Object rejectedValue;
+        private String reason;
+
     }
 }

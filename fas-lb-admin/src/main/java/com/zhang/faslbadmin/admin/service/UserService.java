@@ -49,4 +49,10 @@ public interface UserService {
      */
      PageInfo<FasUserAccount> pageList(FasUserQueryDto userQueryDto);
 
+    /**
+     * 获取验证码
+     * @param randomKey /
+     * @return /
+     */
+    byte[] getVerifyCode(String randomKey);
 }

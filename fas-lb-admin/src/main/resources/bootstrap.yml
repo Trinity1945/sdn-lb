@@ -23,6 +23,10 @@ spring:
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: true
+  redis:
+    host: 1.12.228.45
+    port: 6379
+    database: 1
 
 mybatis:
   mapper-locations: classpath*:mapper/*.xml

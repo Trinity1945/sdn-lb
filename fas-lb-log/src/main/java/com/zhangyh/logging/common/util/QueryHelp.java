@@ -8,6 +8,5 @@ import lombok.extern.slf4j.Slf4j;
  * @date: 2023/3/11  17:14
  */
 @Slf4j
-@SuppressWarnings({"unchecked","all"})
 public class QueryHelp {
 }

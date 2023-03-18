@@ -7,14 +7,18 @@ import com.zhang.faslbadmin.admin.model.dto.FasUserQueryDto;
 import com.zhang.faslbadmin.admin.model.po.FasUserAccount;
 import com.zhang.faslbadmin.admin.model.vo.PageInfo;
 import com.zhang.faslbadmin.admin.service.UserService;
+import com.zhang.faslbadmin.common.constant.RedisConstants;
+import com.zhang.faslbadmin.common.util.CaptchaUtil;
 import com.zhangyh.common.exception.Asserts;
 import com.zhangyh.common.exception.BusinessException;
 import com.zhangyh.common.exception.ErrorCode;
+import com.zhangyh.common.util.RedisUtil;
 import com.zhangyh.security.util.JwtUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +30,7 @@ import tk.mybatis.mapper.entity.Example;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,6 +43,12 @@ import java.util.regex.Pattern;
 public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
+
+    @Resource
+    RedisUtil redisUtil;
+
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
 
     @Resource
     FasUserAccountMapper userMapper;
@@ -123,6 +134,14 @@ public class UserServiceImpl implements UserService {
         userPage.setData(fasUsers);
         userPage.setTotal(pageInfo.getTotal());
         return userPage;
+    }
+
+    @Override
+    public byte[] getVerifyCode(String randomKey) {
+        final String verifyCode = CaptchaUtil.verifyCode(4);
+        final byte[] imageCode = CaptchaUtil.createImageCode(verifyCode);
+        redisUtil.expire(RedisConstants.VERIFY_CODE.getKey()+randomKey,60, TimeUnit.SECONDS);
+        return imageCode;
     }
 
 

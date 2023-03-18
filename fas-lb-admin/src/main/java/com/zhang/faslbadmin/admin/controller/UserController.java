@@ -57,6 +57,11 @@ public class UserController {
         return ResponseHelper.success(tokenMap);
     }
 
+    @GetMapping("/verifyCode")
+    public byte[] verifyCode(@RequestParam("randomKey") String randomKey){
+       return userService.getVerifyCode(randomKey);
+    }
+
     @Log("测试日志")
     @GetMapping("/t")
     public String test(){
@@ -73,6 +78,11 @@ public class UserController {
         return "success";
     }
 
+    /**
+     * 用户分页查询
+     * @param fasUserQueryDto 用户
+     * @return 分页结果
+     */
     @PostMapping("/pageList")
     public PageInfo<FasUserAccount> pageList(@RequestBody FasUserQueryDto fasUserQueryDto){
      return   userService.pageList(fasUserQueryDto);
