@@ -32,3 +32,10 @@ mybatis:
   mapper-locations: classpath*:mapper/*.xml
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+  file:
+    path: C:/Users/17533/Desktop
+
+log:
+  home: C:/Users/17533/Desktop

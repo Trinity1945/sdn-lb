@@ -4,6 +4,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Objects;
 
 /**
@@ -13,7 +14,21 @@ import java.util.Objects;
  */
 public class RequestHolder {
 
-    public static HttpServletRequest getHttpServletRequest(){
+    /**
+     * 获取 HttpServletRequest
+     *
+     * @return HttpServletRequest
+     */
+    public static HttpServletRequest getHttpServletRequest() {
         return ((ServletRequestAttributes) Objects.requireNonNull(RequestContextHolder.getRequestAttributes())).getRequest();
+    }
+
+    /**
+     * 获取 HttpServletResponse
+     *
+     * @return HttpServletResponse
+     */
+    public static HttpServletResponse getResponse(){
+        return ((ServletRequestAttributes) Objects.requireNonNull(RequestContextHolder.getRequestAttributes())).getResponse();
     }
 }

@@ -2,6 +2,7 @@ package com.zhang.faslbadmin.admin.service;
 
 import com.zhang.faslbadmin.admin.model.dto.FasUserQueryDto;
 import com.zhang.faslbadmin.admin.model.po.FasUserAccount;
+import com.zhang.faslbadmin.admin.model.vo.LoginVerifyImgResult;
 import com.zhang.faslbadmin.admin.model.vo.PageInfo;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -51,8 +52,7 @@ public interface UserService {
 
     /**
      * 获取验证码
-     * @param randomKey /
      * @return /
      */
-    byte[] getVerifyCode(String randomKey);
+    LoginVerifyImgResult<byte[]> getVerifyCode();
 }

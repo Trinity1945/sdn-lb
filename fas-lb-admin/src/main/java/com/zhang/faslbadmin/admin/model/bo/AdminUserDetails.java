@@ -56,4 +56,8 @@ public class AdminUserDetails implements UserDetails {
     public boolean isEnabled() {
         return user.getState().equals(0);
     }
+
+    public FasUserAccount getUser(){
+        return this.user;
+    }
 }

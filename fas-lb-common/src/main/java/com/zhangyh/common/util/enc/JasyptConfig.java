@@ -2,7 +2,6 @@ package com.zhangyh.common.util.enc;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * @author zhangyh
@@ -10,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
  * @desc
  */
 
-@Configuration
+//@Configuration
 public class JasyptConfig {
 
     //通过配置文件获取密钥

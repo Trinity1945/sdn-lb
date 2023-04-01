@@ -1,10 +1,12 @@
 package com.zhang.faslbadmin.admin.service.impl;
 
+import cn.hutool.core.util.IdUtil;
 import com.github.pagehelper.PageHelper;
 import com.zhang.faslbadmin.admin.mapper.FasUserAccountMapper;
 import com.zhang.faslbadmin.admin.model.bo.AdminUserDetails;
 import com.zhang.faslbadmin.admin.model.dto.FasUserQueryDto;
 import com.zhang.faslbadmin.admin.model.po.FasUserAccount;
+import com.zhang.faslbadmin.admin.model.vo.LoginVerifyImgResult;
 import com.zhang.faslbadmin.admin.model.vo.PageInfo;
 import com.zhang.faslbadmin.admin.service.UserService;
 import com.zhang.faslbadmin.common.constant.RedisConstants;
@@ -87,7 +89,7 @@ public class UserServiceImpl implements UserService {
             if (!userDetails.isEnabled()) {
                 Asserts.fail("帐号已被禁用");
             }
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null,userDetails.getAuthorities());
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
             token = jwtTokenUtil.generateToken(userDetails);
         } catch (AuthenticationException e) {
@@ -109,7 +111,7 @@ public class UserServiceImpl implements UserService {
     public FasUserAccount getAdminByUserAccount(String username) {
         //查数据库用户信息
         final Example example = new Example(FasUserAccount.class);
-        example.createCriteria().andEqualTo("username",username);
+        example.createCriteria().andEqualTo("username", username);
         return userMapper.selectOneByExample(example);
     }
 
@@ -120,16 +122,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public PageInfo<FasUserAccount> pageList(FasUserQueryDto userQueryDto) {
-        if(userQueryDto.getLimit()==null){
+        if (userQueryDto.getLimit() == null) {
             userQueryDto.setLimit(1);
         }
-        if(userQueryDto.getPage()==null){
+        if (userQueryDto.getPage() == null) {
             userQueryDto.setPage(10);
         }
         PageHelper.startPage(userQueryDto.getLimit(), userQueryDto.getPage());
-         List<FasUserAccount> fasUsers = userMapper.selectAllAccount(userQueryDto);
-         com.github.pagehelper.PageInfo<FasUserAccount> pageInfo = new com.github.pagehelper.PageInfo<>(fasUsers);
-         PageInfo<FasUserAccount> userPage = new PageInfo<>();
+        List<FasUserAccount> fasUsers = userMapper.selectAllAccount(userQueryDto);
+        com.github.pagehelper.PageInfo<FasUserAccount> pageInfo = new com.github.pagehelper.PageInfo<>(fasUsers);
+        PageInfo<FasUserAccount> userPage = new PageInfo<>();
         userPage.setPage(pageInfo.getPages());
         userPage.setData(fasUsers);
         userPage.setTotal(pageInfo.getTotal());
@@ -137,11 +139,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public byte[] getVerifyCode(String randomKey) {
-        final String verifyCode = CaptchaUtil.verifyCode(4);
-        final byte[] imageCode = CaptchaUtil.createImageCode(verifyCode);
-        redisUtil.expire(RedisConstants.VERIFY_CODE.getKey()+randomKey,60, TimeUnit.SECONDS);
-        return imageCode;
+    public LoginVerifyImgResult<byte[]> getVerifyCode() {
+        String randomKey = IdUtil.randomUUID();
+        String verifyCode = CaptchaUtil.verifyCode(4);
+        byte[] imageCode = CaptchaUtil.createImageCode(verifyCode);
+        redisUtil.expire(RedisConstants.VERIFY_CODE.getKey() + randomKey, 60, TimeUnit.SECONDS);
+        LoginVerifyImgResult<byte[]> loginVerifyImgResult = new LoginVerifyImgResult<>();
+        loginVerifyImgResult.setImgBase64(imageCode);
+        loginVerifyImgResult.setUuid(randomKey);
+        return loginVerifyImgResult;
     }
 
 
