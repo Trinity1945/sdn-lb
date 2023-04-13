@@ -1,8 +1,8 @@
 package com.zhang.faslbadmin.admin.service.impl;
 
-import com.zhang.faslbadmin.admin.mapper.FasMenuMapper;
-import com.zhang.faslbadmin.admin.model.po.FasMenu;
 import com.zhang.faslbadmin.admin.service.FasMenuService;
+import com.zhangyh.FasLB.mapper.FasMenuMapper;
+import com.zhangyh.FasLB.model.FasMenu;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;

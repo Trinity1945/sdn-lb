@@ -1,6 +1,6 @@
 package com.zhangyh.logging.common.config;
 
-import com.zhangyh.logging.admin.model.po.Log;
+import com.zhangyh.FasLB.model.Log;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 

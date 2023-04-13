@@ -1,6 +1,6 @@
-package com.zhang.faslbadmin.admin.mapper;
+package com.zhangyh.FasLB.mapper;
 
-import com.zhang.faslbadmin.admin.model.po.FasMenu;
+import com.zhangyh.FasLB.model.FasMenu;
 import tk.mybatis.mapper.common.Mapper;
 
 /**

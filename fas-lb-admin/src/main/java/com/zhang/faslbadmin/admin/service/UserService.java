@@ -1,9 +1,9 @@
 package com.zhang.faslbadmin.admin.service;
 
-import com.zhang.faslbadmin.admin.model.dto.FasUserQueryDto;
-import com.zhang.faslbadmin.admin.model.po.FasUserAccount;
+import com.zhangyh.FasLB.dto.FasUserQueryDto;
 import com.zhang.faslbadmin.admin.model.vo.LoginVerifyImgResult;
 import com.zhang.faslbadmin.admin.model.vo.PageInfo;
+import com.zhangyh.FasLB.model.FasUserAccount;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;

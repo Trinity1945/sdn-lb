@@ -2,7 +2,7 @@ package com.zhangyh.logging.common.aspect;
 
 import cn.hutool.json.JSONUtil;
 import com.zhangyh.common.util.ipUtils.StringUtils;
-import com.zhangyh.logging.admin.model.po.Log;
+import com.zhangyh.FasLB.model.Log;
 import com.zhangyh.logging.common.config.EventPubListener;
 import com.zhangyh.logging.common.util.ThrowableUtil;
 import lombok.extern.slf4j.Slf4j;

@@ -1,7 +1,7 @@
 package com.zhangyh.logging.admin.service;
 
-import com.zhangyh.logging.admin.model.dto.LogQueryCriteria;
-import com.zhangyh.logging.admin.model.po.Log;
+import com.zhangyh.logging.admin.model.vo.LogQueryCriteria;
+import com.zhangyh.FasLB.model.Log;
 import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;

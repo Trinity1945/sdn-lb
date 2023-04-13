@@ -1,6 +1,6 @@
 package com.zhang.faslbadmin.admin.service;
 
-import com.zhang.faslbadmin.admin.model.po.FasMenu;
+import com.zhangyh.FasLB.model.FasMenu;
 
 import java.util.List;
 

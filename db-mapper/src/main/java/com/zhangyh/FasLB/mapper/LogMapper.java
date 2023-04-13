@@ -1,6 +1,6 @@
-package com.zhangyh.logging.admin.mapper;
+package com.zhangyh.FasLB.mapper;
 
-import com.zhangyh.logging.admin.model.po.Log;
+import com.zhangyh.FasLB.model.Log;
 import tk.mybatis.mapper.common.Mapper;
 
 /**

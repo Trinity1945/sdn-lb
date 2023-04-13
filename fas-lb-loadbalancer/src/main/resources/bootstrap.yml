@@ -14,4 +14,10 @@ spring:
         namespace: ${spring.cloud.nacos.discovery.namespace}
         file-extension: yaml
         group: ${spring.cloud.nacos.discovery.group}
-
+        shared-configs[0]:
+          data-id: fas-base-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+          group: ${spring.cloud.nacos.config.group}
+          refresh: true
+        username: nacos
+        password: nacos
+        context-path: /nacos

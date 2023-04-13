@@ -1,6 +1,6 @@
 package com.zhangyh.logging.common.config;
 
-import com.zhangyh.logging.admin.model.po.Log;
+import com.zhangyh.FasLB.model.Log;
 import com.zhangyh.logging.admin.service.LogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

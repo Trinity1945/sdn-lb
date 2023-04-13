@@ -1,5 +1,6 @@
 package com.zhang.faslbadmin;
 
+import com.zhangyh.FasLB.sync.annotation.EnableTableSync;
 import com.zhangyh.common.util.ipUtils.SpringContextHolder;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -12,9 +13,10 @@ import tk.mybatis.spring.annotation.MapperScan;
 /**
  * @author zhangyh
  */
+@EnableTableSync("com.zhangyh.FasLB.model")
 @EnableAsync
 @EnableTransactionManagement
-@MapperScan(basePackages = {"com.zhang.faslbadmin.admin.mapper","com.zhangyh.logging.admin.mapper"})
+@MapperScan(basePackages = {"com.zhangyh.FasLB.mapper"})
 @EnableDiscoveryClient
 @SpringBootApplication
 public class FasLbAdminApplication {

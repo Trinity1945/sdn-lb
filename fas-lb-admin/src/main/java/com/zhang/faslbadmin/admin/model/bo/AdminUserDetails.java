@@ -1,6 +1,6 @@
 package com.zhang.faslbadmin.admin.model.bo;
 
-import com.zhang.faslbadmin.admin.model.po.FasUserAccount;
+import com.zhangyh.FasLB.model.FasUserAccount;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 

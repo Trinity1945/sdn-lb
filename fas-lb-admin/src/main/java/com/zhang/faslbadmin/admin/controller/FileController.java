@@ -25,7 +25,7 @@ public class FileController {
         response.setHeader("Content-Disposition", "attachment; filename=file.txt"); // 设置下载文件名
         log.info("文件上传");
         // 读取本地文件并将内容写入响应流
-        InputStream is = new FileInputStream("C:\\Users\\17533\\Desktop\\t.txt");
+        InputStream is = new FileInputStream("D:\\Users\\Desktop\\新建文本文档.txt");
         OutputStream os = response.getOutputStream();
         byte[] buffer = new byte[1024];
         int len;

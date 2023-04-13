@@ -14,28 +14,17 @@ spring:
         namespace: ${spring.cloud.nacos.discovery.namespace}
         file-extension: yaml
         group: ${spring.cloud.nacos.discovery.group}
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://1.12.228.45:3315/fas-lb?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
-    username: root
-    password: root
+        shared-configs[0]:
+          data-id: fas-base-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+          group: ${spring.cloud.nacos.config.group}
+          refresh: true
+        username: nacos
+        password: nacos
+        context-path: /nacos
 
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: true
-  redis:
-    host: 1.12.228.45
-    port: 6379
-    database: 1
 
-mybatis:
-  mapper-locations: classpath*:mapper/*.xml
-  configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
-logging:
-  file:
-    path: C:/Users/17533/Desktop
 
-log:
-  home: C:/Users/17533/Desktop

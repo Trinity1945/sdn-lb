@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
  * @desc
  * @date: 2023/3/10  21:42
  */
-@ComponentScan(basePackages = {"com.zhangyh.security","com.zhangyh.logging","com.zhangyh.common"})
+@ComponentScan(basePackages = {"com.zhangyh.security","com.zhangyh.logging","com.zhangyh.common","com.zhangyh.FasLB.sync.core"})
 @Configuration
 public class BeanConfig {
 }

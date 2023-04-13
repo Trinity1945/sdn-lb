@@ -1,4 +1,4 @@
-package com.zhang.faslbadmin.admin.model.dto;
+package com.zhangyh.FasLB.dto;
 
 import lombok.Data;
 

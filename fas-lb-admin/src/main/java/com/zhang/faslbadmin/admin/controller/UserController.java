@@ -1,10 +1,8 @@
 package com.zhang.faslbadmin.admin.controller;
 
 import com.zhang.faslbadmin.admin.model.bo.AdminUserDetails;
-import com.zhang.faslbadmin.admin.model.dto.FasUserQueryDto;
+import com.zhangyh.FasLB.dto.FasUserQueryDto;
 import com.zhang.faslbadmin.admin.model.dto.UserAccountDto;
-import com.zhang.faslbadmin.admin.model.po.FasMenu;
-import com.zhang.faslbadmin.admin.model.po.FasUserAccount;
 import com.zhang.faslbadmin.admin.model.vo.LoginVerifyImgResult;
 import com.zhang.faslbadmin.admin.model.vo.PageInfo;
 import com.zhang.faslbadmin.admin.service.FasMenuService;
@@ -12,6 +10,8 @@ import com.zhang.faslbadmin.admin.service.ImgVerifyCodeService;
 import com.zhang.faslbadmin.admin.service.UserService;
 import com.zhang.faslbadmin.common.util.SecurityUtils;
 import com.zhang.faslbadmin.common.valid.LoginGroup;
+import com.zhangyh.FasLB.model.FasMenu;
+import com.zhangyh.FasLB.model.FasUserAccount;
 import com.zhangyh.common.exception.ErrorCode;
 import com.zhangyh.common.http.respose.BaseResponse;
 import com.zhangyh.common.http.respose.ResponseHelper;

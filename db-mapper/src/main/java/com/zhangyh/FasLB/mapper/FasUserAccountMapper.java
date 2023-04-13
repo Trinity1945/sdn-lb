@@ -1,7 +1,7 @@
-package com.zhang.faslbadmin.admin.mapper;
+package com.zhangyh.FasLB.mapper;
 
-import com.zhang.faslbadmin.admin.model.dto.FasUserQueryDto;
-import com.zhang.faslbadmin.admin.model.po.FasUserAccount;
+import com.zhangyh.FasLB.dto.FasUserQueryDto;
+import com.zhangyh.FasLB.model.FasUserAccount;
 import org.apache.ibatis.annotations.Param;
 import tk.mybatis.mapper.common.Mapper;
 

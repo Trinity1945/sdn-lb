@@ -1,4 +1,4 @@
-package com.zhangyh.logging.admin.model.dto;
+package com.zhangyh.logging.admin.model.vo;
 
 import com.zhangyh.logging.common.anotation.Query;
 import lombok.Data;
