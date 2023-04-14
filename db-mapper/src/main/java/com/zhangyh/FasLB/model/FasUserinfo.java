@@ -20,22 +20,27 @@ import java.util.Date;
 @Data
 @Table(name="fas_user_info")
 public class FasUserinfo implements Serializable {
-    /**
-     * 主键id
-     */
+
+    public static final String ID="id";
+    public static final String NAME="name";
+    public static final String ACCOUNT_ID="accountId";
+    public static final String GENDER="gender";
+    public static final String EMAIL="email";
+    public static final String MOBILE="mobile";
+    public static final String DELETED="deleted";
+    public static final String BIRTHDAY="birthday";
+    public static final String CREATE_TIME="createTime";
+    public static final String UPDATE_TIME="updateTime";
+
     @Id
     @Field(field = "id",comment = "主键id",index = PRI.class,autoIncrement = true,allowNull = false)
     @Column(name = "id")
     private Integer id;
-    /**
-     * 用户名
-     */
+
     @Field(field = "name",comment = "用户名字")
     @Column(name = "name")
     private String name;
-    /**
-     * 用户账户id
-     */
+
     @Field(field = "account_id",comment = "用户账户id 关联account表")
     @Column(name = "account_id")
     private Integer accountId;

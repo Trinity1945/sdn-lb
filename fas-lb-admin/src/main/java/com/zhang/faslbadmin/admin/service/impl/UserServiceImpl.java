@@ -16,12 +16,13 @@ import com.zhangyh.common.exception.BusinessException;
 import com.zhangyh.common.exception.ErrorCode;
 import com.zhangyh.common.util.RedisUtil;
 import com.zhangyh.security.util.JwtUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -33,8 +34,6 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @Author: zhangyh
@@ -62,25 +61,12 @@ public class UserServiceImpl implements UserService {
     @Resource
     private BCryptPasswordEncoder passwordEncoder;
 
+    @Resource
+    private  AuthenticationManagerBuilder authenticationManagerBuilder;
+
     @Override
     public String login(String userAccount, String password) {
         String token = null;
-        //数据校验
-        if (StringUtils.isAnyBlank(userAccount, password)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
-        }
-        if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号长度过短");
-        }
-        if (password.length() < 6) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码长度过短");
-        }
-        //账户校验不包含特殊字符
-        String regEx = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
-        Matcher matcher = Pattern.compile(regEx).matcher(userAccount);
-        if (matcher.find()) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码包含特殊字符");
-        }
         try {
             UserDetails userDetails = loadUserByUserAccount(userAccount);
             if (!passwordEncoder.matches(password, userDetails.getPassword())) {
@@ -89,8 +75,13 @@ public class UserServiceImpl implements UserService {
             if (!userDetails.isEnabled()) {
                 Asserts.fail("帐号已被禁用");
             }
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(userAccount, password);
+            Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            //方式二
+//            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+//            SecurityContextHolder.getContext().setAuthentication(authentication);
             token = jwtTokenUtil.generateToken(userDetails);
         } catch (AuthenticationException e) {
             LOGGER.warn("登录失败:{}", e.getMessage());
@@ -146,7 +137,7 @@ public class UserServiceImpl implements UserService {
         redisUtil.expire(RedisConstants.VERIFY_CODE.getKey() + randomKey, 60, TimeUnit.SECONDS);
         LoginVerifyImgResult<byte[]> loginVerifyImgResult = new LoginVerifyImgResult<>();
         loginVerifyImgResult.setImgBase64(imageCode);
-        loginVerifyImgResult.setUuid(randomKey);
+        loginVerifyImgResult.setKey(randomKey);
         return loginVerifyImgResult;
     }
 }

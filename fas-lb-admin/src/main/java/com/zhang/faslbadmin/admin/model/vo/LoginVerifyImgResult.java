@@ -17,6 +17,6 @@ public class LoginVerifyImgResult<T> {
     private T imgBase64;
 
     @ApiModelProperty(value = "验证码 UUID", example = "c140a792-4ca2-4dac-8d4c-35750b78524f")
-    private String uuid;
+    private String key;
 
 }

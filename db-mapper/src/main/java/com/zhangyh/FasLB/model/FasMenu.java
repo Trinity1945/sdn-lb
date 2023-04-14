@@ -21,6 +21,23 @@ import java.util.Date;
 @Table(name = "fas_menu")
 public class FasMenu implements Serializable {
 
+    public static final String MENU_ID="menuId";
+    public static final String PID="pid";
+    public static final String SUB_COUNT="subCount";
+    public static final String TYPE="type";
+    public static final String TITLE="title";
+    public static final String ICON="icon";
+    public static final String ICON_COLOR="iconColor";
+    public static final String PATH="path";
+    public static final String COMPONENT="component";
+    public static final String NAME="name";
+    public static final String HIDDEN="hidden";
+    public static final String CREATE_BY="createBy";
+    public static final String UPDATE_BY="updateBy";
+    public static final String DELETED="deleted";
+    public static final String CREATE_TIME="createTime";
+    public static final String UPDATE_TIME="updateTime";
+
     @Field(field = "menu_id",comment = "菜单Id",index = PRI.class,autoIncrement = true,allowNull = false)
     @Id
     private Integer menuId;
@@ -76,6 +93,10 @@ public class FasMenu implements Serializable {
     @Field(field = "update_by",comment = "更新者")
     @Column(name = "update_by")
     private String updateBy;
+
+    @Field(field = "deleted",comment = "是否删除 0否1是",defaultValue = "0",allowNull = false)
+    @Column(name = "deleted")
+    private Byte deleted;
 
     @Field(field = "create_time",comment = "创建日期")
     @Column(name = "create_time")

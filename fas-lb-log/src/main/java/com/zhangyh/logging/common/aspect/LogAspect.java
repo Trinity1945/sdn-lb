@@ -1,10 +1,13 @@
 package com.zhangyh.logging.common.aspect;
 
 import cn.hutool.json.JSONUtil;
-import com.zhangyh.common.util.ipUtils.StringUtils;
 import com.zhangyh.FasLB.model.Log;
+import com.zhangyh.common.util.RequestHolder;
+import com.zhangyh.common.util.ipUtils.StringUtils;
+import com.zhangyh.logging.common.anotation.LogLevel;
 import com.zhangyh.logging.common.config.EventPubListener;
 import com.zhangyh.logging.common.util.ThrowableUtil;
+import com.zhangyh.security.util.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -17,9 +20,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -63,8 +63,7 @@ public class LogAspect {
         long totalTimeMillis = stopWatch.getTotalTimeMillis();
         log.info("request end, id: {}, cost: {}ms", requestId, totalTimeMillis);
         // 获取请求路径
-        RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
-        HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
+        HttpServletRequest request = RequestHolder.getHttpServletRequest();
         final String browser = StringUtils.getBrowser(request);
         final String ip = StringUtils.getIp(request);
         final MethodSignature signature =  (MethodSignature)point.getSignature();
@@ -72,13 +71,14 @@ public class LogAspect {
         com.zhangyh.logging.common.anotation.Log aopLog = method.getAnnotation(com.zhangyh.logging.common.anotation.Log.class);
         String methodName = point.getTarget().getClass().getName() + "." + signature.getName() + "()";
         final String parameter = getParameter(method, point.getArgs());
-        Log log = new Log("INFO",totalTimeMillis);
+        Log log = new Log(aopLog.logLevel().getName(),totalTimeMillis);
         log.setMethod(methodName);
         log.setParams(parameter);
         log.setBrowser(browser);
         log.setRequestIp(ip);
         log.setDescription(aopLog.value());
         log.setUserAccount(getUsername());
+        log.setBusinessType(aopLog.businessType().getMessage());
         log.setAddress(StringUtils.getCityInfo(log.getRequestIp()));
         log.setCreateTime(new Timestamp(System.currentTimeMillis()));
         eventPubListener.pushListener(log);
@@ -92,11 +92,10 @@ public class LogAspect {
      */
     @AfterThrowing(pointcut = "logPointcut()", throwing = "e")
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
-        Log log = new Log("ERROR",System.currentTimeMillis() - currentTime.get());
+        Log log = new Log(LogLevel.ERROR.getName(), System.currentTimeMillis() - currentTime.get());
         currentTime.remove();
         log.setExceptionDetail(ThrowableUtil.getStackTrace(e).getBytes());
-        RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
-        HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
+        HttpServletRequest request = RequestHolder.getHttpServletRequest();
         final String browser = StringUtils.getBrowser(request);
         final String ip = StringUtils.getIp(request);
         log.setBrowser(browser);
@@ -109,9 +108,9 @@ public class LogAspect {
 
     public String getUsername() {
         try {
-            return "username";
+            return SecurityUtils.getCurrentUsername();
         }catch (Exception e){
-            return "";
+            return "anonymousUser";
         }
     }
 

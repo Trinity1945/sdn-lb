@@ -212,12 +212,20 @@ public class SqlBuilder {
                 Index createIndex = (Index) IndexHelper.getIndex(v.getIndexType().getClass().getName().substring(v.getIndexType().getClass().getName().lastIndexOf(".") + 1));
                 String createScript = createIndex.alterScript(tableName, v.getName());
                 indexCreate.append(createScript).append(";").append("\r\n");
+                if(v.getAutoIncrement()&&!field.getAutoIncrement()&&v.getIndexType() instanceof PRI){
+                    String autoIncrement = MessageFormat.format(ALTER_AUTO_INCREMENT, tableName, buildFieldSql(field));
+                    scriptBuilder.append(autoIncrement).append(";").append("\r\n");
+                }
             }
             if (v.getIndexType() != null && field.getIndexType() == null) {
                 //实体存在索引数据库不存在索引
                 Index index = (Index) IndexHelper.getIndex(v.getIndexType().getClass().getName().substring(v.getIndexType().getClass().getName().lastIndexOf(".") + 1));
                 String createScript = index.alterScript(tableName, v.getName());
                 indexCreate.append(createScript).append(";").append("\r\n");
+                if(v.getAutoIncrement()&&!field.getAutoIncrement()&&v.getIndexType() instanceof PRI){
+                    String autoIncrement = MessageFormat.format(ALTER_AUTO_INCREMENT, tableName, buildFieldSql(field));
+                    scriptBuilder.append(autoIncrement).append(";").append("\r\n");
+                }
             }
         });
 

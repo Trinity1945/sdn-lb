@@ -1,4 +1,4 @@
-package com.zhang.faslbadmin.common.util;
+package com.zhangyh.security.util;
 
 import com.zhangyh.common.exception.BusinessException;
 import com.zhangyh.common.exception.ErrorCode;

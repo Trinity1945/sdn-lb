@@ -1,20 +1,18 @@
 package com.zhang.faslbadmin.admin.controller;
 
 import com.zhang.faslbadmin.admin.model.bo.AdminUserDetails;
-import com.zhangyh.FasLB.dto.FasUserQueryDto;
 import com.zhang.faslbadmin.admin.model.dto.UserAccountDto;
 import com.zhang.faslbadmin.admin.model.vo.LoginVerifyImgResult;
 import com.zhang.faslbadmin.admin.model.vo.PageInfo;
-import com.zhang.faslbadmin.admin.service.FasMenuService;
 import com.zhang.faslbadmin.admin.service.ImgVerifyCodeService;
 import com.zhang.faslbadmin.admin.service.UserService;
-import com.zhang.faslbadmin.common.util.SecurityUtils;
 import com.zhang.faslbadmin.common.valid.LoginGroup;
-import com.zhangyh.FasLB.model.FasMenu;
+import com.zhangyh.FasLB.dto.FasUserQueryDto;
 import com.zhangyh.FasLB.model.FasUserAccount;
 import com.zhangyh.common.exception.ErrorCode;
 import com.zhangyh.common.http.respose.BaseResponse;
 import com.zhangyh.common.http.respose.ResponseHelper;
+import com.zhangyh.security.util.SecurityUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -46,9 +43,6 @@ public class UserController {
 
     @Resource
     UserService userService;
-
-    @Resource
-    FasMenuService menuService;
 
     @Resource
     ImgVerifyCodeService imgVerifyCodeService;
@@ -90,14 +84,16 @@ public class UserController {
     }
 
     @ApiOperation(value = "获取登录的用户")
-    @GetMapping("/getCurrentUserName")
+    @GetMapping("/getCurrentUser")
     public BaseResponse<FasUserAccount> getCurrentUser() {
         AdminUserDetails currentUser = (AdminUserDetails) SecurityUtils.getCurrentUser();
         return ResponseHelper.success(currentUser.getUser());
     }
 
-    @GetMapping("/getAllMenu")
-    public BaseResponse<List<FasMenu>> listAllMenu(){
-        return ResponseHelper.success(menuService.listAll());
+    @ApiOperation(value = "获取登录的用户名")
+    @GetMapping("/getCurrentUserName")
+    public BaseResponse<String> getCurrentUserName() {
+        String currentUsername = SecurityUtils.getCurrentUsername();
+        return ResponseHelper.success(currentUsername);
     }
 }

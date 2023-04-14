@@ -37,6 +37,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.zhangyh.FasLB</groupId>
+            <artifactId>fas-lb-security</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

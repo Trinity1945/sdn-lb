@@ -5,6 +5,8 @@ import cn.hutool.cache.impl.FIFOCache;
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.CircleCaptcha;
 import cn.hutool.core.lang.UUID;
+import cn.hutool.crypto.digest.DigestAlgorithm;
+import cn.hutool.crypto.digest.Digester;
 import com.zhang.faslbadmin.admin.model.vo.LoginVerifyImgResult;
 import com.zhang.faslbadmin.admin.service.ImgVerifyCodeService;
 import com.zhangyh.common.exception.BusinessException;
@@ -32,25 +34,29 @@ public class ImgVerifyCodeServiceImpl implements ImgVerifyCodeService {
         String imageBase64 = captcha.getImageBase64Data();
 
         String uuid = UUID.fastUUID().toString();
-        verifyCodeCache.put(uuid, code);
+        Digester md5 = new Digester(DigestAlgorithm.MD5);
+        String key = md5.digestHex(uuid);
+        verifyCodeCache.put(key, code);
 
         LoginVerifyImgResult<String> loginVerifyImgResult = new LoginVerifyImgResult();
         loginVerifyImgResult.setImgBase64(imageBase64);
-        loginVerifyImgResult.setUuid(uuid);
+        loginVerifyImgResult.setKey(key);
         return loginVerifyImgResult;
     }
 
     @Override
-    public boolean verifyCaptcha(String uuid, String code) {
-        String expectedCode = verifyCodeCache.get(uuid);
+    public boolean verifyCaptcha(String key, String code) {
+        String expectedCode = verifyCodeCache.get(key);
         return Objects.equals(expectedCode, code);
     }
 
     @Override
-    public void checkCaptcha(String uuid, String code) {
-        boolean flag = verifyCaptcha(uuid, code);
+    public void checkCaptcha(String key, String code) {
+        boolean flag = verifyCaptcha(key, code);
         if (!flag) {
             throw new BusinessException("验证码错误或已失效");
         }
+        //校验通过 删除验证码
+        verifyCodeCache.remove(key);
     }
 }

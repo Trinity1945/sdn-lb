@@ -1,5 +1,6 @@
 package com.zhang.faslbadmin.admin.service;
 
+import com.zhang.faslbadmin.admin.model.dto.FasMenuUpdateAndAddDto;
 import com.zhangyh.FasLB.model.FasMenu;
 
 import java.util.List;
@@ -12,4 +13,12 @@ import java.util.List;
 public interface FasMenuService {
 
     List<FasMenu> listAll();
+
+    FasMenu getById(String id);
+
+    Boolean  updateMenu(FasMenuUpdateAndAddDto menu);
+
+    Integer deleteMenu(String ids);
+
+    Integer addMenu(FasMenuUpdateAndAddDto menu);
 }

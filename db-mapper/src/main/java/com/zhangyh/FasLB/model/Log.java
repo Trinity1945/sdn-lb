@@ -23,6 +23,20 @@ import java.util.Date;
 @AllArgsConstructor
 public class Log  implements Serializable {
 
+    public static final String ID="id";
+    public static final String USER_ACCOUNT="userAccount";
+    public static final String DESCRIPTION="description";
+    public static final String METHOD="method";
+    public static final String PARAMS="params";
+    public static final String LOG_TYPE="logType";
+    public static final String BUSINESS_TYPE="businessType";
+    public static final String REQUEST_IP="requestIp";
+    public static final String ADDRESS="address";
+    public static final String BROWSER="browser";
+    public static final String TIME="time";
+    public static final String EXCEPTION_DETAIL="exceptionDetail";
+    public static final String CREATE_TIME="create_time";
+
     @Id
     @Field(field = "log_id",comment = "主键id",index = PRI.class,autoIncrement = true,allowNull = false)
     @Column(name = "log_id")
@@ -48,6 +62,10 @@ public class Log  implements Serializable {
     @Field(field = "log_type",comment = "日志类型")
     @Column(name = "log_type")
     private String logType;
+
+    @Field(field = "business_type",comment = "业务操作类型")
+    @Column(name = "business_type")
+    private String businessType;
 
     @Field(field = "request_ip",comment = "请求ip")
     @Column(name = "request_ip")

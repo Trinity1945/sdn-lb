@@ -28,6 +28,4 @@ public class FasLbAdminApplication {
     public SpringContextHolder springContextHolder() {
         return new SpringContextHolder();
     }
-
-
 }

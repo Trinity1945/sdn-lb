@@ -26,6 +26,17 @@ import java.util.Date;
 @AllArgsConstructor
 public class FasUserAccount implements Serializable {
 
+    public static final String ID="id";
+    public static final String USERNAME="username";
+    public static final String PASSWORD="password";
+    public static final String AVATAR="avatar";
+    public static final String IP="ip";
+    public static final String STATE="state";
+    public static final String DELETED="deleted";
+    public static final String CREATE_TIME="createTime";
+    public static final String UPDATE_TIME="updateTime";
+    public static final String EXPIRE_TIME="expiredTime";
+
     @Id
     @Field(field = "id",comment = "主键id",index = PRI.class,autoIncrement = true,allowNull = false)
     @Column(name = "id")
@@ -51,9 +62,9 @@ public class FasUserAccount implements Serializable {
     @Column(name = "state")
     private Integer state;
 
-    @Field(field = "deleted",comment = "是否删除")
+    @Field(field = "deleted",comment = "是否删除",defaultValue = "0")
     @Column(name = "deleted")
-    private Integer deleted ;
+    private Byte deleted ;
 
     @Field(field = "create_time",comment = "创建时间")
     @Column(name = "create_time")

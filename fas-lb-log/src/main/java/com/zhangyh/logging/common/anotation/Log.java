@@ -17,4 +17,15 @@ public @interface Log {
      * 记录用户操作描述
      */
     String value() default "";
+
+    /**
+     * 日志级别
+     * @return
+     */
+    LogLevel logLevel() default LogLevel.INFO;
+
+    /**
+     * 功能
+     */
+    BusinessTypeEnum businessType() default BusinessTypeEnum.OTHER;
 }
