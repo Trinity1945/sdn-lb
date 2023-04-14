@@ -1,10 +1,9 @@
 package com.zhangyh.logging.admin.service.impl;
 
+import com.zhangyh.FasLB.mapper.LogMapper;
+import com.zhangyh.FasLB.model.Log;
 import com.zhangyh.common.exception.BusinessException;
 import com.zhangyh.common.exception.ErrorCode;
-import com.zhangyh.FasLB.mapper.LogMapper;
-import com.zhangyh.logging.admin.model.vo.LogQueryCriteria;
-import com.zhangyh.FasLB.model.Log;
 import com.zhangyh.logging.admin.service.LogService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,8 +32,13 @@ public class LogServiceImpl implements LogService {
     }
 
     @Override
-    public List<Log> queryAll(LogQueryCriteria criteria) {
-        return null;
+    public List<Log> queryAll() {
+        return logMapper.selectAll();
+    }
+
+    @Override
+    public Log get(String id) {
+        return logMapper.selectByPrimaryKey(Integer.parseInt(id));
     }
 
 

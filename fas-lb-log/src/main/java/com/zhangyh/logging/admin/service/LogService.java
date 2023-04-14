@@ -1,6 +1,5 @@
 package com.zhangyh.logging.admin.service;
 
-import com.zhangyh.logging.admin.model.vo.LogQueryCriteria;
 import com.zhangyh.FasLB.model.Log;
 import org.springframework.scheduling.annotation.Async;
 
@@ -20,10 +19,8 @@ public interface LogService {
     @Async
     void save( Log log);
 
-    /**
-     * 查询全部数据
-     * @param criteria 查询条件
-     * @return /
-     */
-    List<Log> queryAll(LogQueryCriteria criteria);
+
+    List<Log> queryAll();
+
+    Log get(String ids);
 }
