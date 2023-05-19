@@ -13,5 +13,9 @@ import java.util.Map;
  */
 public interface BandwidthMonitorService extends IFloodlightService {
 
+    /**
+     * 获取当前设备的带宽详情
+     * @return
+     */
     Map<NodePortTuple, SwitchPortBandwidth> getAllBandwidth();
 }

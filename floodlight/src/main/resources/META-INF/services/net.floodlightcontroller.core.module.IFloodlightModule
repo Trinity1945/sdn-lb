@@ -19,7 +19,6 @@ net.floodlightcontroller.simpleft.FT
 net.floodlightcontroller.staticentry.StaticEntryPusher
 net.floodlightcontroller.topology.TopologyManager
 net.floodlightcontroller.forwarding.Forwarding
-net.floodlightcontroller.loadbalancer.LoadBalancer
 net.floodlightcontroller.linkdiscovery.internal.LinkDiscoveryManager
 net.floodlightcontroller.devicemanager.internal.DeviceManagerImpl
 net.floodlightcontroller.firewall.Firewall
@@ -32,4 +31,5 @@ net.floodlightcontroller.cpanalyzer.CPAnalyzer
 net.floodlightcontroller.hasupport.HAController
 net.floodlightcontroller.com.zhangyh.BandwidthMonitor
 net.floodlightcontroller.com.zhangyh.TopologyMonitor
-net.floodlightcontroller.com.zhangyh.HostMonitor
+net.floodlightcontroller.com.zhangyh.DeviceMonitor
+net.floodlightcontroller.com.zhangyh.PackageIn

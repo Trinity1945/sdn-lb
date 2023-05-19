@@ -17,7 +17,6 @@ public class BandWidthMonitorResource extends ServerResource {
     @Get("json")
     public Map<NodePortTuple, SwitchPortBandwidth> retrieve() {
         BandwidthMonitorService service = (BandwidthMonitorService)getContext().getAttributes().get(BandwidthMonitorService.class.getCanonicalName());
-        final Map<NodePortTuple, SwitchPortBandwidth> allBandwidth = service.getAllBandwidth();
-        return allBandwidth;
+        return service.getAllBandwidth();
     }
 }

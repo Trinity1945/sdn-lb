@@ -14,12 +14,13 @@ import net.floodlightcontroller.threadpool.IThreadPoolService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @Author: zhangyh
- * @desc  网络外宽监测
+ * @desc 网络外宽监测
  * @date: 2023/4/5  17:52
  */
 public class BandwidthMonitor implements IFloodlightModule, BandwidthMonitorService {
@@ -29,7 +30,7 @@ public class BandwidthMonitor implements IFloodlightModule, BandwidthMonitorServ
     IThreadPoolService threadPoolService;
 
     IRestApiService restApiService;
-    private static Logger log = LoggerFactory.getLogger(BandwidthMonitor.class);
+    private static final Logger log = LoggerFactory.getLogger(BandwidthMonitor.class);
 
     @Override
     public Collection<Class<? extends IFloodlightService>> getModuleServices() {
@@ -57,40 +58,39 @@ public class BandwidthMonitor implements IFloodlightModule, BandwidthMonitorServ
     @Override
     public void init(FloodlightModuleContext context) throws FloodlightModuleException {
         log.info("执行我的模块");
-        statisticsService=context.getServiceImpl(IStatisticsService.class);
-        threadPoolService=context.getServiceImpl(IThreadPoolService.class);
-        restApiService=context.getServiceImpl(IRestApiService.class);
+        statisticsService = context.getServiceImpl(IStatisticsService.class);
+        threadPoolService = context.getServiceImpl(IThreadPoolService.class);
+        restApiService = context.getServiceImpl(IRestApiService.class);
     }
 
     @Override
     public void startUp(FloodlightModuleContext context) throws FloodlightModuleException {
-        log.info("监测带宽中---------------》》》》》");
-        int portStatsInterval=4;
+        log.info("监测带宽中----------------------->>>");
+        int portStatsInterval = 4;
         threadPoolService
                 .getScheduledExecutor()
                 .scheduleAtFixedRate(this::getAllBandwidth, portStatsInterval, portStatsInterval, TimeUnit.SECONDS);
         log.warn("Statistics collection thread(s) started");
-        getAllBandwidth();
         restApiService.addRestletRoutable(new BandwidthMonitorRoutable());
     }
 
     /**
      * 获取网络带宽状况
+     *
      * @return
      */
-    public Map<NodePortTuple, SwitchPortBandwidth> getAllBandwidth(){
-        log.info("带宽---------------》》》》》");
+    public Map<NodePortTuple, SwitchPortBandwidth> getAllBandwidth() {
+        log.info("带宽--------------------->>>");
         //获取交换机带宽情况
         statisticsService.collectStatistics(true);
         Map<NodePortTuple, SwitchPortBandwidth> bandwidthConsumption = statisticsService.getBandwidthConsumption();
-        bandwidthConsumption.entrySet().forEach((k)->{
-            final NodePortTuple key = k.getKey();
-            final SwitchPortBandwidth value = k.getValue();
-            final long rx = value.getBitsPerSecondRx().getValue();
-            final long tx = value.getBitsPerSecondTx().getValue();
-            final long speed = value.getLinkSpeedBitsPerSec().getValue() / 1000; // 端口速度转换为 Mbps
-            final double l =( (double)(((rx + tx) * 8) /(double) ((speed * 4) )* 100));
-            log.info("建：{}==RX:{}  TX:{} speed:{}  利用率：{}",key,rx,tx,speed,l);
+        bandwidthConsumption.forEach((key, value) -> {
+            long rx = value.getBitsPerSecondRx().getValue();
+            long tx = value.getBitsPerSecondTx().getValue();
+            long speed = value.getLinkSpeedBitsPerSec().getValue(); // 端口速度转换为 Mbps
+            double rate = (rx + tx) / (double)(speed); // 将除数转换为double类型，确保计算结果为小数
+            DecimalFormat df = new DecimalFormat("#.###"); // 创建DecimalFormat对象，设置保留三位小数
+            log.info("设备带宽：{}==RX:{}  TX:{} speed:{}  利用率：{}", key, rx, tx, speed, df.format(rate * 100) );
         });
         return bandwidthConsumption;
     }

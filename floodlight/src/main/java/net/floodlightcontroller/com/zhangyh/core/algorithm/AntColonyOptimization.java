@@ -1,6 +1,7 @@
-package com.example.faslbloadbalancer.admin.core;
+package net.floodlightcontroller.com.zhangyh.core.algorithm;
 
-import com.alibaba.fastjson.JSON;
+import net.floodlightcontroller.com.zhangyh.core.algorithm.Ant;
+import net.floodlightcontroller.com.zhangyh.model.SwitchNode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,11 +13,11 @@ import java.util.Map;
  * @desc 蚁群算法
  * @date: 2023/5/12  8:12
  */
-public class ACO {
+public class AntColonyOptimization {
     /**
      * 解空间
      */
-    private  Map<String, List<Edge>> graph = new HashMap<>();
+    private  Map<String, List<SwitchNode.Links>> graph = new HashMap<>();
     /**
      * 蚂蚁数量
      */
@@ -51,7 +52,7 @@ public class ACO {
      */
     Map<String, Map<String, Double>> pheromones = new HashMap<>();
 
-    public ACO(Integer numAnts, Double alpha, Double beta, Double evaporationRate, Double initialPheromone, Integer maxIterations,Double Q) {
+    public AntColonyOptimization(Integer numAnts, Double alpha, Double beta, Double evaporationRate, Double initialPheromone, Integer maxIterations, Double Q) {
         this.numAnts = numAnts;
         this.alpha = alpha;
         this.beta = beta;
@@ -67,7 +68,7 @@ public class ACO {
      * @param end 终点
      * @return 最佳路径
      */
-    public  List<String> shortestPath(String start, String end,Map<String, List<Edge>> graph) {
+    public  List<String> shortestPath(String start, String end,Map<String, List<SwitchNode.Links>> graph) {
         //构建觅食空间
         this.graph=graph;
         //初始化信息素
@@ -84,10 +85,12 @@ public class ACO {
             for (int j = 0; j < numAnts; j++) {
                 ants.add(new Ant(start, end,graph));
             }
+            int x=0;
             // 蚂蚁走路
             for (Ant ant : ants) {
                 while (!ant.path.get(ant.path.size() - 1).equals(end)) {
                     String s = ant.chooseNext(pheromones, alpha, beta);
+                    //蚂蚁无路走了
                     if(s==null){
                         break;
                     }
@@ -99,10 +102,12 @@ public class ACO {
                     if (src.equals(dst)) {
                         continue;
                     }
+                    //信息素挥发
                     pheromones.get(src).put(dst, pheromones.get(src).get(dst) * (1 - evaporationRate));
                     for (Ant ant : ants) {
                         if (ant.visited.contains(dst)) {
-                            pheromones.get(src).put(dst, pheromones.get(src).get(dst) + Q / ant.latency);
+                            //信息素新增
+                            pheromones.get(src).put(dst, pheromones.get(src).get(dst) + 1.0 / ant.latency);
                         }
                     }
                 }
@@ -112,10 +117,10 @@ public class ACO {
                 if (ant.end.equals(end) && ant.latency < bestLatency) {
                     bestPath = ant.path;
                     bestLatency = ant.latency;
-                    System.out.println("迭代"+iterations+"次：最佳路径："+ JSON.toJSONString(bestPath));
                 }
             }
         }
+        System.out.println("最小迭代次数："+min);
         return bestPath;
     }
 
