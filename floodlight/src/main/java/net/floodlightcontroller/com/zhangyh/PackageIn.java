@@ -58,9 +58,9 @@ public class PackageIn implements IOFMessageListener, IFloodlightModule {
                         IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
         if (eth.getEtherType() == EthType.IPv4) {
             IPv4 ipv4 = (IPv4) eth.getPayload();
-            logger.info("Source IP:{} ", IPv4.fromIPv4Address(ipv4.getSourceAddress().getInt()));
-            logger.info("Destination IP:{} ", IPv4.fromIPv4Address(ipv4.getDestinationAddress().getInt()));
-            logger.info("接受消息的交换机：{}",sw.getId());
+//            logger.info("Source IP:{} ", IPv4.fromIPv4Address(ipv4.getSourceAddress().getInt()));
+//            logger.info("Destination IP:{} ", IPv4.fromIPv4Address(ipv4.getDestinationAddress().getInt()));
+//            logger.info("接受消息的交换机：{}",sw.getId());
             OFFactory ofFactory = switchService.getSwitch(sw.getId()).getOFFactory();
 
         }

@@ -125,7 +125,7 @@ public class TopologyMonitor implements IFloodlightModule, ITopologyListener, To
                     double rate = (rx + tx) / (double)(speed); // 将除数转换为double类型，确保计算结果为小数
                     DecimalFormat df = new DecimalFormat("#.###"); // 创建DecimalFormat对象，设置保留三位小数
                     links1.setRate(df.format(rate * 100));
-                    System.out.println("交换机："+bw.getSwitchId()+"端口"+bw.getSwitchPort()+"带宽大小 TX="+bw.getBitsPerSecondTx().getValue()+"RX="+bw.getBitsPerSecondRx().getValue()+"利用率："+df.format(rate * 100));
+//                    System.out.println("交换机："+bw.getSwitchId()+"端口"+bw.getSwitchPort()+"带宽大小 TX="+bw.getBitsPerSecondTx().getValue()+"RX="+bw.getBitsPerSecondRx().getValue()+"利用率："+df.format(rate * 100));
                 }
                 topology.getLinks().add(links1);
             });

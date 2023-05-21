@@ -14,6 +14,7 @@ import org.projectfloodlight.openflow.types.TransportPort;
 public class Client {
 
     IPv4Address ipAddress;
+    IPv4Address targetIpAddress;
     IpProtocol nw_proto;
     TransportPort srcPort;
     TransportPort targetPort;

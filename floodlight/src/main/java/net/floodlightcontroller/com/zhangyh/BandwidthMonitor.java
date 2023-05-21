@@ -80,7 +80,7 @@ public class BandwidthMonitor implements IFloodlightModule, BandwidthMonitorServ
      * @return
      */
     public Map<NodePortTuple, SwitchPortBandwidth> getAllBandwidth() {
-        log.info("带宽--------------------->>>");
+        log.info("带宽监控--------------------->>>");
         //获取交换机带宽情况
         statisticsService.collectStatistics(true);
         Map<NodePortTuple, SwitchPortBandwidth> bandwidthConsumption = statisticsService.getBandwidthConsumption();
@@ -90,7 +90,7 @@ public class BandwidthMonitor implements IFloodlightModule, BandwidthMonitorServ
             long speed = value.getLinkSpeedBitsPerSec().getValue(); // 端口速度转换为 Mbps
             double rate = (rx + tx) / (double)(speed); // 将除数转换为double类型，确保计算结果为小数
             DecimalFormat df = new DecimalFormat("#.###"); // 创建DecimalFormat对象，设置保留三位小数
-            log.info("设备带宽：{}==RX:{}  TX:{} speed:{}  利用率：{}", key, rx, tx, speed, df.format(rate * 100) );
+//            log.info("设备带宽：{}==RX:{}  TX:{} speed:{}  利用率：{}", key, rx, tx, speed, df.format(rate * 100) );
         });
         return bandwidthConsumption;
     }

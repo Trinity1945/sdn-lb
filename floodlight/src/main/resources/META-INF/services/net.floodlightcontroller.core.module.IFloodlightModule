@@ -32,4 +32,4 @@ net.floodlightcontroller.hasupport.HAController
 net.floodlightcontroller.com.zhangyh.BandwidthMonitor
 net.floodlightcontroller.com.zhangyh.TopologyMonitor
 net.floodlightcontroller.com.zhangyh.DeviceMonitor
-net.floodlightcontroller.com.zhangyh.PackageIn
+net.floodlightcontroller.com.zhangyh.core.Loadbalancer
