@@ -1,7 +1,7 @@
 package net.floodlightcontroller.com.zhangyh.core.algorithm;
 
 
-import net.floodlightcontroller.com.zhangyh.model.SwitchNode;
+import net.floodlightcontroller.com.zhangyh.core.domain.Edge;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 /**
  * @Author: zhangyh
  * @desc 蚂蚁
- * @date: 2023/5/12  23:54
+ * @date: 2023/4/12  23:54
  */
 public class Ant {
     /**
@@ -36,11 +36,11 @@ public class Ant {
     /**
      * 觅食空间--邻接表
      */
-    private Map<String, List<SwitchNode.Links>> graph ;
+    private Map<String, List<Edge>> graph ;
 
-    public Ant(String start, String end,Map<String, List<SwitchNode.Links>> graph) {
+    public Ant(String start,Map<String, List<Edge>> graph) {
         this.start = start;
-        this.end = end;
+        this.end = start;
         this.path = new ArrayList<>();
         this.path.add(start);
         this.visited = new HashSet<>();
@@ -51,10 +51,13 @@ public class Ant {
     public String chooseNext(Map<String, Map<String, Double>> pheromones, double alpha, double beta) {
         // 计算每个邻居的概率
         List<Map.Entry<String, Double>> probabilities = new ArrayList<>();
-        for (SwitchNode.Links neighbor : graph.get(this.path.get(this.path.size() - 1))) {
+        for (Edge neighbor : graph.get(this.path.get(this.path.size() - 1))) {
             if (!this.visited.contains(neighbor.dstSwitch)) {
                 double pheromone = pheromones.get(this.path.get(this.path.size() - 1)).get(neighbor.dstSwitch);
-                double distance = (0.7*neighbor.latency)+(Double.parseDouble(neighbor.getRate())*0.3);
+                if(neighbor.getRate()==null){
+                    neighbor.setRate(0.0);
+                }
+                double distance = (0.7*neighbor.latency)+(neighbor.getRate()*0.3);
                 double probability = Math.pow(pheromone, alpha) * Math.pow(1.0 / distance, beta);
                 probabilities.add(new AbstractMap.SimpleEntry<>(neighbor.dstSwitch, probability));
             }
@@ -68,6 +71,7 @@ public class Ant {
             this.path.add(nextNode);
             this.visited.add(nextNode);
             this.latency += nextLatency;
+            this.end=nextNode;
             return nextNode;
         } else {
             return null;

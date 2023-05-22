@@ -37,7 +37,7 @@ public class Ant {
 
     public Ant(String start, String end,Map<String, List<Edge>> graph) {
         this.start = start;
-        this.end = end;
+        this.end = start;
         this.path = new ArrayList<>();
         this.path.add(start);
         this.visited = new HashSet<>();
@@ -64,6 +64,7 @@ public class Ant {
             int nextLatency = graph.get(this.path.get(this.path.size() - 1)).stream().filter(n -> n.dstSwitch.equals(nextNode)).findFirst().get().latency;
             this.path.add(nextNode);
             this.visited.add(nextNode);
+            this.end=nextNode;
             this.latency += nextLatency;
             return nextNode;
         } else {

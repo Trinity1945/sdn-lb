@@ -109,7 +109,7 @@ public class ACO {
             }
             // 找到最短路径
             for (Ant ant : ants) {
-                if (ant.end.equals(end) && ant.latency < bestLatency) {
+                if (ant.path.get(ant.path.size() - 1).equals(end) && ant.latency < bestLatency) {
                     bestPath = ant.path;
                     bestLatency = ant.latency;
                     System.out.println("迭代"+iterations+"次：最佳路径："+ JSON.toJSONString(bestPath));
