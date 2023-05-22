@@ -68,6 +68,7 @@ public class ACO {
      * @return 最佳路径
      */
     public  List<String> shortestPath(String start, String end,Map<String, List<Edge>> graph) {
+        System.out.println("蚁群觅食空间："+JSON.toJSONString(graph));
         //构建觅食空间
         this.graph=graph;
         //初始化信息素

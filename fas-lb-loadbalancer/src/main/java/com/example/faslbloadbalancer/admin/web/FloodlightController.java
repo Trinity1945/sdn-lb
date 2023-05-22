@@ -6,6 +6,7 @@ import com.example.faslbloadbalancer.admin.model.vo.Topology;
 import com.example.faslbloadbalancer.admin.service.FloodlightService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -41,8 +42,8 @@ public class FloodlightController {
     }
 
     @GetMapping("/aco")
-    public Mono<List<String>> aco() {
-        return floodlightService.aco();
+    public Mono<List<String>> aco(@RequestParam String startSwitch,@RequestParam String endSwitch) {
+        return floodlightService.aco(startSwitch,endSwitch);
     }
 
 }

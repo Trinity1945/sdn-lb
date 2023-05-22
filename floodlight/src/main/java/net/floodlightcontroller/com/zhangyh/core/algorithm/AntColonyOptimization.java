@@ -77,8 +77,6 @@ public class AntColonyOptimization {
         this.graph=graph;
         //初始化信息素
         initPheromones(initialPheromone);
-        //迭代次数
-        int min= Integer.MAX_VALUE;
         int iterations=0;
         List<String> bestPath = null;
         int bestLatency = Integer.MAX_VALUE;
@@ -117,7 +115,7 @@ public class AntColonyOptimization {
                 if (ant.path.get(ant.path.size() - 1).equals(end) && ant.latency < bestLatency) {
                     bestPath = ant.path;
                     bestLatency = ant.latency;
-                    log.info("迭代：{}次；本次迭代最佳路径为：{}",iterations,JSON.toJSONString(bestPath));
+                    log.info("迭代第{}次；本次迭代最佳路径为：{}",iterations,JSON.toJSONString(bestPath));
                 }
             }
         }

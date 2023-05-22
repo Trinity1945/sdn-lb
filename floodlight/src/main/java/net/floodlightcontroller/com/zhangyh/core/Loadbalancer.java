@@ -97,7 +97,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
      */
     Map<String, List<Edge>> graph;
 
-    private static final Integer TIME_OUT=10;
+    private static final Integer TIME_OUT = 10;
 
     @Override
     public Collection<Class<? extends IFloodlightService>> getModuleServices() {
@@ -138,11 +138,11 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
         statisticsService = context.getServiceImpl(IStatisticsService.class);
         threadService = context.getServiceImpl(IThreadPoolService.class);
         deviceManagerService = context.getServiceImpl(IDeviceService.class);
-        iLinkDiscoveryService=context.getServiceImpl(ILinkDiscoveryService.class);
+        iLinkDiscoveryService = context.getServiceImpl(ILinkDiscoveryService.class);
 
         lbClient = new HashSet<>();
-        topoInstence=new ArrayList<>();
-        graph=new ConcurrentHashMap<>();
+        topoInstence = new ArrayList<>();
+        graph = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -311,11 +311,11 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
                         (srcCluster != null) &&
                         (dstCluster != null)) {
                     //最佳路径获取
-                    Path routeIn =  getPath(dstDap.getNodeId(),
-                            dstDap.getPortId(),
-                            srcDap.getNodeId(),
-                            srcDap.getPortId());
-                    Path routeOut =  getPath(dstDap.getNodeId(),
+                    Path routeIn = getPath(srcDap.getNodeId(),
+                            srcDap.getPortId(),
+                            dstDap.getNodeId(),
+                            dstDap.getPortId());
+                    Path routeOut = getPath(dstDap.getNodeId(),
                             dstDap.getPortId(),
                             srcDap.getNodeId(),
                             srcDap.getPortId());
@@ -327,8 +327,8 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
                     if (!routeOut.getPath().isEmpty()) {
                         pushStaticRoute(false, routeOut, client, sw);
                     }
-                    log.info("起点：{}，端口：{}",srcDap.getNodeId(),srcDap.getPortId());
-                    log.info("终点：{}，端口：{}",dstDap.getNodeId(),dstDap.getPortId());
+                    log.info("起点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
+                    log.info("终点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
                     routeIn.getPath().forEach(e -> {
                         log.info("ACO入路由：{}====入端口：{}", e.getNodeId().toString(), e.getPortId());
                     });
@@ -487,18 +487,13 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
         if (srcId.equals(dstId)) {
             return new Path(id, ImmutableList.of());
         }
-
         Path result = null;
 
         //获取拓扑结构
         Map<DatapathId, Set<Link>> topologyLinks = iLinkDiscoveryService.getSwitchLinks();
-        if(cacheTopologyLinks!=null&&cacheTopologyLinks.equals(topologyLinks)){
-           result= computeOrderedPaths(srcId,dstId);
-        }else{
-            cacheTopologyLinks=topologyLinks;
-            buildGraph(topologyLinks);
-            result= computeOrderedPaths(srcId,dstId);
-        }
+        buildGraph(topologyLinks);
+        System.out.println(JSON.toJSONString(graph));
+        result = computeOrderedPaths(srcId, dstId);
         if (log.isTraceEnabled()) {
             log.trace("getPath: {} -> {}", id, result);
         }
@@ -507,9 +502,10 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
 
     /**
      * 构建解空间
+     *
      * @param topologyLinks
      */
-    private void buildGraph(  Map<DatapathId, Set<Link>> topologyLinks){
+    private void buildGraph(Map<DatapathId, Set<Link>> topologyLinks) {
         topologyLinks.forEach(((dataPathId, links) -> {
             SwitchNode topology = new SwitchNode();
             topology.setSwitchDPID(dataPathId.toString());
@@ -521,58 +517,62 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
                 linkInfo.setDstPort(link.getDstPort().getPortNumber());
                 linkInfo.setLatency(link.getLatency().getValue());
                 SwitchPortBandwidth bw = statisticsService.getBandwidthConsumption(dataPathId, link.getSrcPort());
-                if(bw!=null){
+                if (bw != null) {
                     long tx = bw.getBitsPerSecondTx().getValue();
                     long rx = bw.getBitsPerSecondRx().getValue();
-                    long speed = bw.getLinkSpeedBitsPerSec().getValue(); // 端口速度转换为 Mbps
-                    double rate = (rx + tx) / (double)(speed); // 将除数转换为double类型，确保计算结果为小数
-                    DecimalFormat df = new DecimalFormat("#.###"); // 创建DecimalFormat对象，设置保留三位小数
+                    long speed = bw.getLinkSpeedBitsPerSec().getValue();
+                    double rate = (rx + tx) / (double) (speed);
+                    DecimalFormat df = new DecimalFormat("#.###");
                     linkInfo.setRate(df.format(rate * 100));
-                    log.info("设备：{} 带宽利用率：{}",dataPathId,df.format(rate * 100));
+//                    log.info("设备：{} 带宽利用率：{}", dataPathId, df.format(rate * 100));
                 }
                 topology.getLinks().add(linkInfo);
             });
             topoInstence.add(topology);
         }));
-        //构建解空间
-        topoInstence.forEach(topology -> {
-            graph.put(topology.getSwitchDPID(),new ArrayList<>());
-            topology.getLinks().forEach(links -> {
-                if(!links.getDstSwitch().equals(topology.getSwitchDPID())){
-                    Edge edge = new Edge();
-                    edge.setDstSwitch(links.getDstSwitch());
-                    edge.setLatency(links.getLatency());
-                    edge.setSrcPort(links.getSrcPort());
-                    edge.setDstPort(links.getDstPort());
-                    if(links.getRate()!=null){
-                        edge.setRate(Double.parseDouble(links.getRate()));
+        if(topoInstence!=null){
+            //构建解空间
+            topoInstence.forEach(topology -> {
+                graph.put(topology.getSwitchDPID(), new ArrayList<>());
+                topology.getLinks().forEach(links -> {
+                    if (!links.getDstSwitch().equals(topology.getSwitchDPID())) {
+                        Edge edge = new Edge();
+                        edge.setDstSwitch(links.getDstSwitch());
+                        edge.setLatency(links.getLatency());
+                        edge.setSrcPort(links.getSrcPort());
+                        edge.setDstPort(links.getDstPort());
+                        if (links.getRate() != null) {
+                            edge.setRate(Double.parseDouble(links.getRate()));
+                        }
+                        //添加关联的交换机
+                        graph.get(topology.getSwitchDPID()).add(edge);
                     }
-                    //添加关联的交换机
-                    graph.get(topology.getSwitchDPID()).add(edge);
-                }
+                });
             });
-        });
+        }
     }
 
     /**
      * 计算最佳路径
      */
-    private Path computeOrderedPaths(DatapathId startSwitch,DatapathId endSwitch) {
-        AntColonyOptimization aco = new AntColonyOptimization(6, 1.0, 2.0, 0.3, 0.1, 100,10.0);
+    private Path computeOrderedPaths(DatapathId startSwitch, DatapathId endSwitch) {
+        AntColonyOptimization aco = new AntColonyOptimization(6, 1.0, 2.0, 0.3, 0.1, 100, 10.0);
         List<String> pathString = aco.shortestPath(startSwitch.toString(), endSwitch.toString(), graph);
-        log.info("最佳路径：{}", JSON.toJSONString(pathString));
+        if(pathString!=null&&pathString.size()>0){
+            log.info("最佳路径：{}", JSON.toJSONString(pathString));
+        }
         //转化为Path
         PathId pathId = new PathId(startSwitch, endSwitch);
         List<NodePortTuple> nptList = new ArrayList<>();
-        if(pathString!=null&&pathString.size()>0){
-            for(int i=0;i<pathString.size()-1;i++){
+        if (pathString != null && pathString.size() > 0) {
+            for (int i = 0; i < pathString.size() - 1; i++) {
                 String srcSwitch = pathString.get(i);
                 String dstSwitch = pathString.get(i + 1);
                 List<Edge> edges = graph.get(srcSwitch);
-                for (int j = 0; j < edges.size(); j++) {
-                    if(edges.get(j).getDstSwitch().equals(dstSwitch)){
-                        NodePortTuple nodePortTuple1 = new NodePortTuple(DatapathId.of(srcSwitch), OFPort.of(edges.get(j).getSrcPort()));
-                        NodePortTuple nodePortTuple2 = new NodePortTuple(DatapathId.of(dstSwitch), OFPort.of(edges.get(j).getDstPort()));
+                for (Edge edge : edges) {
+                    if (edge.getDstSwitch().equals(dstSwitch)) {
+                        NodePortTuple nodePortTuple1 = new NodePortTuple(DatapathId.of(srcSwitch), OFPort.of(edge.getSrcPort()));
+                        NodePortTuple nodePortTuple2 = new NodePortTuple(DatapathId.of(dstSwitch), OFPort.of(edge.getDstPort()));
                         nptList.add(nodePortTuple1);
                         nptList.add(nodePortTuple2);
                     }
@@ -580,7 +580,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
             }
             return new Path(pathId, nptList);
         }
-       return null;
+        return null;
     }
 
 

@@ -51,6 +51,9 @@ public class Ant {
         for (Edge neighbor : graph.get(this.path.get(this.path.size() - 1))) {
             if (!this.visited.contains(neighbor.dstSwitch)) {
                 double pheromone = pheromones.get(this.path.get(this.path.size() - 1)).get(neighbor.dstSwitch);
+                if(neighbor.getRate()==null){
+                    neighbor.setRate(0.0);
+                }
                 double distance = (0.7*neighbor.latency)+(neighbor.getRate()*0.3);
                 double probability = Math.pow(pheromone, alpha) * Math.pow(1.0 / distance, beta);
                 probabilities.add(new AbstractMap.SimpleEntry<>(neighbor.dstSwitch, probability));
