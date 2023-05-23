@@ -114,6 +114,10 @@ public class ACO {
                     bestPath = ant.path;
                     bestLatency = ant.latency;
                     System.out.println("迭代"+iterations+"次：最佳路径："+ JSON.toJSONString(bestPath));
+                }else{
+                    if(ant.path!=null){
+                        System.out.println("蚂蚁路径"+JSON.toJSONString(ant.path));
+                    }
                 }
             }
         }

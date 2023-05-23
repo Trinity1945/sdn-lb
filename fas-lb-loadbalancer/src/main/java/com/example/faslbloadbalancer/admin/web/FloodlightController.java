@@ -4,6 +4,7 @@ import com.example.faslbloadbalancer.admin.core.Edge;
 import com.example.faslbloadbalancer.admin.model.vo.Device;
 import com.example.faslbloadbalancer.admin.model.vo.Topology;
 import com.example.faslbloadbalancer.admin.service.FloodlightService;
+import com.example.faslbloadbalancer.common.util.HexString;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -42,8 +43,8 @@ public class FloodlightController {
     }
 
     @GetMapping("/aco")
-    public Mono<List<String>> aco(@RequestParam String startSwitch,@RequestParam String endSwitch) {
-        return floodlightService.aco(startSwitch,endSwitch);
+    public Mono<List<String>> aco(@RequestParam Integer startSwitch,@RequestParam Integer endSwitch) {
+        return floodlightService.aco(HexString.toHexString(startSwitch),HexString.toHexString(endSwitch));
     }
 
 }

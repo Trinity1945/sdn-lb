@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Author: zhangyh
@@ -87,17 +88,15 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
      */
     List<SwitchNode> topoInstence;
 
-    /**
-     * 缓存拓扑结构
-     */
-    Map<DatapathId, Set<Link>> cacheTopologyLinks;
 
     /**
      * 蚁群解空间
      */
     Map<String, List<Edge>> graph;
 
-    private static final Integer TIME_OUT = 10;
+    private Map<PathId, List<Path>>    pathcache;
+
+    private static final Integer TIME_OUT = 5;
 
     @Override
     public Collection<Class<? extends IFloodlightService>> getModuleServices() {
@@ -143,6 +142,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
         lbClient = new HashSet<>();
         topoInstence = new ArrayList<>();
         graph = new ConcurrentHashMap<>();
+        pathcache=new ConcurrentHashMap<>();
     }
 
     @Override
@@ -151,6 +151,15 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
         debugCounterService.registerModule(this.getName());
         counterPacketOut = debugCounterService.registerCounter(this.getName(), "packet-outs-written", "Packet outs written by the LoadBalancer", IDebugCounterService.MetaData.WARN);
         counterPacketIn = debugCounterService.registerCounter(this.getName(), "packet-ins-received", "Packet ins received by the LoadBalancer", IDebugCounterService.MetaData.WARN);
+        int portStatsInterval=5;
+        threadService
+                .getScheduledExecutor()
+                .scheduleAtFixedRate(this::clearCache, portStatsInterval, portStatsInterval, TimeUnit.SECONDS);
+    }
+
+    public void clearCache(){
+        log.info("路径缓存清空--------------------------------------》");
+        pathcache.clear();
     }
 
     @Override
@@ -210,13 +219,6 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
             }
 //            IDevice dstDevice = IDeviceService.fcStore.get(cntx, IDeviceService.CONTEXT_DST_DEVICE);
 //            IDevice srcDevice = IDeviceService.fcStore.get(cntx, IDeviceService.CONTEXT_SRC_DEVICE);
-
-//            Map<DatapathId, Set<Link>> allLinks = topologyService.getAllLinks();
-//            allLinks.forEach((k,v)->{
-//               v.forEach(l->{
-//                   log.info("交换机：{}    连：{}",k.toString(),JSON.toJSONString(l));
-//               });
-//            });
             doLoadBalance(client, sw, pi);
         }
         return Command.CONTINUE;
@@ -321,20 +323,52 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
                             srcDap.getPortId());
 
                     if (!routeIn.getPath().isEmpty()) {
+                        log.info("起点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
+                        log.info("终点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
+                        routeIn.getPath().forEach(e -> {
+                            log.info("ACO入路由：{}====入端口：{}", e.getNodeId().toString(), e.getPortId());
+                        });
                         pushStaticRoute(true, routeIn, client, sw);
+                    }else{
+                        log.info("容错迪杰斯特拉算法");
+                         routeIn =
+                                routingEngineService.getPath(srcDap.getNodeId(),
+                                        srcDap.getPortId(),
+                                        dstDap.getNodeId(),
+                                        dstDap.getPortId());
+                        if (!routeIn.getPath().isEmpty()) {
+                            log.info("起点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
+                            log.info("终点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
+                            routeIn.getPath().forEach(e -> {
+                                log.info("ACO入路由：{}====入端口：{}", e.getNodeId().toString(), e.getPortId());
+                            });
+                            pushStaticRoute(true, routeIn, client, sw);
+                        }
                     }
-
+                    log.info("---------------------------------------------------------------------------------");
                     if (!routeOut.getPath().isEmpty()) {
                         pushStaticRoute(false, routeOut, client, sw);
+                        log.info("起点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
+                        log.info("终点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
+                        routeOut.getPath().forEach(e -> {
+                            log.info("ACO出路由：{}~~~~出端口：{}", e.getNodeId().toString(), e.getPortId());
+                        });
+                    }else{
+                        log.info("容错迪杰斯特拉算法");
+                        routeOut =
+                                routingEngineService.getPath(dstDap.getNodeId(),
+                                        dstDap.getPortId(),
+                                        srcDap.getNodeId(),
+                                        srcDap.getPortId());
+                        if (!routeOut.getPath().isEmpty()) {
+                            pushStaticRoute(false, routeOut, client, sw);
+                            log.info("起点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
+                            log.info("终点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
+                            routeOut.getPath().forEach(e -> {
+                                log.info("ACO出路由：{}~~~~出端口：{}", e.getNodeId().toString(), e.getPortId());
+                            });
+                        }
                     }
-                    log.info("起点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
-                    log.info("终点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
-                    routeIn.getPath().forEach(e -> {
-                        log.info("ACO入路由：{}====入端口：{}", e.getNodeId().toString(), e.getPortId());
-                    });
-                    routeOut.getPath().forEach(e -> {
-                        log.info("ACO出路由：{}~~~~出端口：{}", e.getNodeId().toString(), e.getPortId());
-                    });
                 }
                 iSrcDaps++;
                 iDstDaps++;
@@ -468,6 +502,14 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
 
         PathId id = new PathId(srcId, dstId);
         r = new Path(id, nptList);
+        List<Path> paths = pathcache.get(id);
+        if(paths==null||paths.size()==0){
+            List<Path> path=new ArrayList<>();
+            path.add(r);
+            pathcache.put(id,path);
+        }else{
+            paths.add(r);
+        }
 //        r.getPath().forEach(e -> {
 //            log.info("ACO路由：{}====入端口：{}", e.getNodeId().toString(), e.getPortId());
 //        });
@@ -489,11 +531,21 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
         }
         Path result = null;
 
+        //缓存中查询
+        try {
+            if (!pathcache.get(id).isEmpty()) {
+                result = pathcache.get(id).get(0);
+            }
+        } catch (Exception e) {
+            log.warn("Could not find route from {} to {}. If the path exists, wait for the topology to settle, and it will be detected", srcId, dstId);
+        }
+        if(result==null){
+            Map<DatapathId, Set<Link>> topologyLinks = iLinkDiscoveryService.getSwitchLinks();
+            buildGraph(topologyLinks);
+            log.info("解空间：{}",JSON.toJSONString(graph));
+            result = computeOrderedPaths(srcId, dstId);
+        }
         //获取拓扑结构
-        Map<DatapathId, Set<Link>> topologyLinks = iLinkDiscoveryService.getSwitchLinks();
-        buildGraph(topologyLinks);
-        System.out.println(JSON.toJSONString(graph));
-        result = computeOrderedPaths(srcId, dstId);
         if (log.isTraceEnabled()) {
             log.trace("getPath: {} -> {}", id, result);
         }
@@ -530,24 +582,27 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
             });
             topoInstence.add(topology);
         }));
-        if(topoInstence!=null){
+        if (topoInstence != null) {
             //构建解空间
             topoInstence.forEach(topology -> {
                 graph.put(topology.getSwitchDPID(), new ArrayList<>());
-                topology.getLinks().forEach(links -> {
-                    if (!links.getDstSwitch().equals(topology.getSwitchDPID())) {
-                        Edge edge = new Edge();
-                        edge.setDstSwitch(links.getDstSwitch());
-                        edge.setLatency(links.getLatency());
-                        edge.setSrcPort(links.getSrcPort());
-                        edge.setDstPort(links.getDstPort());
-                        if (links.getRate() != null) {
-                            edge.setRate(Double.parseDouble(links.getRate()));
+                List<SwitchNode.Links> linkInfo = topology.getLinks();
+                if (linkInfo != null && linkInfo.size() > 0) {
+                    topology.getLinks().forEach(links -> {
+                        if (!links.getDstSwitch().equals(topology.getSwitchDPID())) {
+                            Edge edge = new Edge();
+                            edge.setDstSwitch(links.getDstSwitch());
+                            edge.setLatency(links.getLatency());
+                            edge.setSrcPort(links.getSrcPort());
+                            edge.setDstPort(links.getDstPort());
+                            if (links.getRate() != null) {
+                                edge.setRate(Double.parseDouble(links.getRate()));
+                            }
+                            //添加关联的交换机
+                            graph.get(topology.getSwitchDPID()).add(edge);
                         }
-                        //添加关联的交换机
-                        graph.get(topology.getSwitchDPID()).add(edge);
-                    }
-                });
+                    });
+                }
             });
         }
     }
@@ -556,10 +611,12 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
      * 计算最佳路径
      */
     private Path computeOrderedPaths(DatapathId startSwitch, DatapathId endSwitch) {
-        AntColonyOptimization aco = new AntColonyOptimization(6, 1.0, 2.0, 0.3, 0.1, 100, 10.0);
+        AntColonyOptimization aco = new AntColonyOptimization(6, 1.0, 2.0, 0.3, 8.0, 50, 10.0);
         List<String> pathString = aco.shortestPath(startSwitch.toString(), endSwitch.toString(), graph);
-        if(pathString!=null&&pathString.size()>0){
-            log.info("最佳路径：{}", JSON.toJSONString(pathString));
+        if (pathString != null && pathString.size() > 0) {
+            log.info("起点：{}到终点：{}----最佳路径：{}", startSwitch.toString(),endSwitch.toString(),JSON.toJSONString(pathString));
+        } else {
+            log.warn("起点：{}到终点：{}----最佳路径迭代失败！！！",startSwitch.toString(),endSwitch.toString());
         }
         //转化为Path
         PathId pathId = new PathId(startSwitch, endSwitch);

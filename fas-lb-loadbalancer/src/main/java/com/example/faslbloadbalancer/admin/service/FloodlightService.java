@@ -68,8 +68,9 @@ public class FloodlightService {
 
     public Mono<List<String>> aco(String startSwitch,String endSwitch) {
         return Mono.defer(()->{
-            ACO aco = new ACO(6, 1.0, 2.0, 0.3, 0.1, 100,10.0);
+            ACO aco = new ACO(6, 1.0, 2.0, 0.3, 1.0, 50,10.0);
           return Mono.just(aco);
-        }).zipWhen(e->this.buildTopology(),(aco,topology)-> aco.shortestPath(startSwitch, endSwitch, topology));
+        }).zipWhen(e->this.buildTopology(),(aco,topology)-> aco.shortestPath(startSwitch, endSwitch, topology))
+                .defaultIfEmpty(new ArrayList<>());
     }
 }

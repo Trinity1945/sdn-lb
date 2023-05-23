@@ -67,7 +67,13 @@ public class Ant {
             double totalProb = probabilities.stream().mapToDouble(Map.Entry::getValue).sum();
             probabilities = probabilities.stream().map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), e.getValue() / totalProb)).collect(Collectors.toList());
             String nextNode = probabilities.stream().map(Map.Entry::getKey).collect(Collectors.toList()).get(chooseIndex(probabilities.stream().mapToDouble(Map.Entry::getValue).toArray()));
-            long nextLatency = graph.get(this.path.get(this.path.size() - 1)).stream().filter(n -> n.dstSwitch.equals(nextNode)).findFirst().get().latency;
+            Optional<Edge> newLatency = graph.get(this.path.get(this.path.size() - 1)).stream().filter(n -> n.dstSwitch.equals(nextNode)).findFirst();
+            long nextLatency;
+            if(newLatency.isPresent()){
+                nextLatency = newLatency.get().latency;
+            }else{
+                nextLatency=0L;
+            }
             this.path.add(nextNode);
             this.visited.add(nextNode);
             this.latency += nextLatency;
