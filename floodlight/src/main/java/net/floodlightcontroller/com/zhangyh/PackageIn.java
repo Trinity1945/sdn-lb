@@ -10,9 +10,7 @@ import net.floodlightcontroller.core.module.FloodlightModuleException;
 import net.floodlightcontroller.core.module.IFloodlightModule;
 import net.floodlightcontroller.core.module.IFloodlightService;
 import net.floodlightcontroller.packet.Ethernet;
-import net.floodlightcontroller.packet.IPv4;
 import net.floodlightcontroller.restserver.IRestApiService;
-import org.projectfloodlight.openflow.protocol.OFFactory;
 import org.projectfloodlight.openflow.protocol.OFMessage;
 import org.projectfloodlight.openflow.protocol.OFType;
 import org.projectfloodlight.openflow.types.EthType;
@@ -57,11 +55,11 @@ public class PackageIn implements IOFMessageListener, IFloodlightModule {
                 IFloodlightProviderService.bcStore.get(cntx,
                         IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
         if (eth.getEtherType() == EthType.IPv4) {
-            IPv4 ipv4 = (IPv4) eth.getPayload();
+//            IPv4 ipv4 = (IPv4) eth.getPayload();
 //            logger.info("Source IP:{} ", IPv4.fromIPv4Address(ipv4.getSourceAddress().getInt()));
 //            logger.info("Destination IP:{} ", IPv4.fromIPv4Address(ipv4.getDestinationAddress().getInt()));
 //            logger.info("接受消息的交换机：{}",sw.getId());
-            OFFactory ofFactory = switchService.getSwitch(sw.getId()).getOFFactory();
+//            OFFactory ofFactory = switchService.getSwitch(sw.getId()).getOFFactory();
 
         }
 //        logger.info("监听消息：源mac{}---目标mac:{}", eth.getSourceMACAddress(), eth.getDestinationMACAddress());

@@ -4,6 +4,10 @@ import com.alibaba.fastjson.JSON;
 import net.floodlightcontroller.com.zhangyh.core.algorithm.AntColonyOptimization;
 import net.floodlightcontroller.com.zhangyh.core.domain.Client;
 import net.floodlightcontroller.com.zhangyh.core.domain.Edge;
+import net.floodlightcontroller.com.zhangyh.core.domain.LoadBalanceClient;
+import net.floodlightcontroller.com.zhangyh.core.route.DisableLoadBalanceRoutable;
+import net.floodlightcontroller.com.zhangyh.core.route.EnableLoadBalanceRoutable;
+import net.floodlightcontroller.com.zhangyh.core.service.LoadBalanceService;
 import net.floodlightcontroller.com.zhangyh.model.SwitchNode;
 import net.floodlightcontroller.core.FloodlightContext;
 import net.floodlightcontroller.core.IFloodlightProviderService;
@@ -49,6 +53,8 @@ import org.slf4j.LoggerFactory;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -56,7 +62,7 @@ import java.util.concurrent.TimeUnit;
  * @desc 负载均衡
  * @date: 2023/4/14  19:09
  */
-public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
+public class Loadbalancer implements IFloodlightModule, IOFMessageListener, LoadBalanceService {
 
     protected static Logger log = LoggerFactory.getLogger(Loadbalancer.class);
 
@@ -76,11 +82,6 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
     protected IStatisticsService statisticsService;
     protected IThreadPoolService threadService;
 
-    /**
-     * 保存需要负载均衡的客户端信息
-     */
-    protected Set<Client> lbClient;
-
     protected static int LB_PRIORITY = 33333;
 
     /**
@@ -88,24 +89,30 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
      */
     List<SwitchNode> topoInstence;
 
-
+    private Boolean enableLoadBalance = false;
     /**
      * 蚁群解空间
      */
     Map<String, List<Edge>> graph;
 
-    private Map<PathId, List<Path>>    pathcache;
+    private Map<PathId, List<Path>> pathcache;
 
     private static final Integer TIME_OUT = 5;
 
+    private Set<LoadBalanceClient> loadBalanceClients;
+
     @Override
     public Collection<Class<? extends IFloodlightService>> getModuleServices() {
-        return null;
+        Collection<Class<? extends IFloodlightService>> l = new ArrayList<Class<? extends IFloodlightService>>();
+        l.add(LoadBalanceService.class);
+        return l;
     }
 
     @Override
     public Map<Class<? extends IFloodlightService>, IFloodlightService> getServiceImpls() {
-        return null;
+        Map<Class<? extends IFloodlightService>, IFloodlightService> m = new HashMap<Class<? extends IFloodlightService>, IFloodlightService>();
+        m.put(LoadBalanceService.class, this);
+        return m;
     }
 
     @Override
@@ -139,10 +146,10 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
         deviceManagerService = context.getServiceImpl(IDeviceService.class);
         iLinkDiscoveryService = context.getServiceImpl(ILinkDiscoveryService.class);
 
-        lbClient = new HashSet<>();
-        topoInstence = new ArrayList<>();
+        topoInstence = new CopyOnWriteArrayList<>();
         graph = new ConcurrentHashMap<>();
-        pathcache=new ConcurrentHashMap<>();
+        pathcache = new ConcurrentHashMap<>();
+        loadBalanceClients = new CopyOnWriteArraySet<>();
     }
 
     @Override
@@ -151,15 +158,35 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
         debugCounterService.registerModule(this.getName());
         counterPacketOut = debugCounterService.registerCounter(this.getName(), "packet-outs-written", "Packet outs written by the LoadBalancer", IDebugCounterService.MetaData.WARN);
         counterPacketIn = debugCounterService.registerCounter(this.getName(), "packet-ins-received", "Packet ins received by the LoadBalancer", IDebugCounterService.MetaData.WARN);
-        int portStatsInterval=5;
+        int portStatsInterval = 60;
+        int loadBalanceStatsInterval = 10;
         threadService
                 .getScheduledExecutor()
                 .scheduleAtFixedRate(this::clearCache, portStatsInterval, portStatsInterval, TimeUnit.SECONDS);
+        threadService
+                .getScheduledExecutor()
+                .scheduleAtFixedRate(this::loadbalance, loadBalanceStatsInterval, loadBalanceStatsInterval, TimeUnit.SECONDS);
+        addRestletRoutable();
     }
 
-    public void clearCache(){
+    public void clearCache() {
         log.info("路径缓存清空--------------------------------------》");
         pathcache.clear();
+        log.info("拓扑构建--------------------------------------》");
+        Map<DatapathId, Set<Link>> topologyLinks = iLinkDiscoveryService.getSwitchLinks();
+        buildGraph(topologyLinks);
+    }
+
+    public void loadbalance() {
+        log.info("任务调度中");
+        if (enableLoadBalance) {
+            log.info("负载均衡中:{}",loadBalanceClients.size());
+            loadBalanceClients.forEach(client -> {
+                doLoadBalance(client.getClient(), client.getSw(), client.getPi());
+            });
+        }
+        loadBalanceClients.clear();
+        log.info("调度结束");
     }
 
     @Override
@@ -214,14 +241,25 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
                 client.setSrcPort(TransportPort.of(8));
                 client.setTargetPort(TransportPort.of(0));
             }
-            if (statisticsService != null) {
+            if (statisticsService != null&&enableLoadBalance) {
                 statisticsService.collectStatistics(true);
+            }
+            if (enableLoadBalance) {
+                LoadBalanceClient loadBalanceClient = new LoadBalanceClient(client, sw, pi);
+                loadBalanceClients.add(loadBalanceClient);
             }
 //            IDevice dstDevice = IDeviceService.fcStore.get(cntx, IDeviceService.CONTEXT_DST_DEVICE);
 //            IDevice srcDevice = IDeviceService.fcStore.get(cntx, IDeviceService.CONTEXT_SRC_DEVICE);
-            doLoadBalance(client, sw, pi);
+//            if(enableLoadBalance){
+//                doLoadBalance(client,sw,pi);
+//            }
         }
         return Command.CONTINUE;
+    }
+
+    protected void addRestletRoutable() {
+        restApiService.addRestletRoutable(new EnableLoadBalanceRoutable());
+        restApiService.addRestletRoutable(new DisableLoadBalanceRoutable());
     }
 
     /**
@@ -329,13 +367,22 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
                             log.info("ACO入路由：{}====入端口：{}", e.getNodeId().toString(), e.getPortId());
                         });
                         pushStaticRoute(true, routeIn, client, sw);
-                    }else{
+                    } else {
                         log.info("容错迪杰斯特拉算法");
-                         routeIn =
+                        routeIn =
                                 routingEngineService.getPath(srcDap.getNodeId(),
                                         srcDap.getPortId(),
                                         dstDap.getNodeId(),
                                         dstDap.getPortId());
+                        PathId pathId = new PathId(srcDap.getNodeId(), dstDap.getNodeId());
+                        List<Path> paths = pathcache.get(pathId);
+                        if (paths == null || paths.size() == 0) {
+                            List<Path> path = new ArrayList<>();
+                            path.add(routeIn);
+                            pathcache.put(pathId, path);
+                        } else {
+                            paths.add(routeIn);
+                        }
                         if (!routeIn.getPath().isEmpty()) {
                             log.info("起点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
                             log.info("终点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
@@ -353,13 +400,22 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
                         routeOut.getPath().forEach(e -> {
                             log.info("ACO出路由：{}~~~~出端口：{}", e.getNodeId().toString(), e.getPortId());
                         });
-                    }else{
+                    } else {
                         log.info("容错迪杰斯特拉算法");
                         routeOut =
                                 routingEngineService.getPath(dstDap.getNodeId(),
                                         dstDap.getPortId(),
                                         srcDap.getNodeId(),
                                         srcDap.getPortId());
+                        PathId pathId = new PathId(dstDap.getNodeId(), srcDap.getNodeId());
+                        List<Path> paths = pathcache.get(pathId);
+                        if (paths == null || paths.size() == 0) {
+                            List<Path> path = new ArrayList<>();
+                            path.add(routeOut);
+                            pathcache.put(pathId, path);
+                        } else {
+                            paths.add(routeOut);
+                        }
                         if (!routeOut.getPath().isEmpty()) {
                             pushStaticRoute(false, routeOut, client, sw);
                             log.info("起点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
@@ -503,11 +559,11 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
         PathId id = new PathId(srcId, dstId);
         r = new Path(id, nptList);
         List<Path> paths = pathcache.get(id);
-        if(paths==null||paths.size()==0){
-            List<Path> path=new ArrayList<>();
+        if (paths == null || paths.size() == 0) {
+            List<Path> path = new ArrayList<>();
             path.add(r);
-            pathcache.put(id,path);
-        }else{
+            pathcache.put(id, path);
+        } else {
             paths.add(r);
         }
 //        r.getPath().forEach(e -> {
@@ -539,11 +595,12 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
         } catch (Exception e) {
             log.warn("Could not find route from {} to {}. If the path exists, wait for the topology to settle, and it will be detected", srcId, dstId);
         }
-        if(result==null){
-            Map<DatapathId, Set<Link>> topologyLinks = iLinkDiscoveryService.getSwitchLinks();
-            buildGraph(topologyLinks);
-            log.info("解空间：{}",JSON.toJSONString(graph));
+        if (result == null) {
+//            log.info("解空间：{}",JSON.toJSONString(graph));
             result = computeOrderedPaths(srcId, dstId);
+        }else{
+            result.getPath().remove(0);
+            result.getPath().remove(result.getPath().size()-1);
         }
         //获取拓扑结构
         if (log.isTraceEnabled()) {
@@ -650,4 +707,14 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener {
                     return d1ClusterId.compareTo(d2ClusterId);
                 }
             };
+
+    @Override
+    public void enableLoadBalance() {
+        this.enableLoadBalance = true;
+    }
+
+    @Override
+    public void disableLoadBalance() {
+        this.enableLoadBalance = false;
+    }
 }

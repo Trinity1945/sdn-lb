@@ -80,7 +80,7 @@ public class BandwidthMonitor implements IFloodlightModule, BandwidthMonitorServ
      * @return
      */
     public Map<NodePortTuple, SwitchPortBandwidth> getAllBandwidth() {
-        log.info("带宽监控--------------------->>>");
+//        log.info("带宽监控--------------------->>>");
         //获取交换机带宽情况
         statisticsService.collectStatistics(true);
         Map<NodePortTuple, SwitchPortBandwidth> bandwidthConsumption = statisticsService.getBandwidthConsumption();

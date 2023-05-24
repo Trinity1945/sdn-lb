@@ -104,7 +104,7 @@ public class TopologyMonitor implements IFloodlightModule, ITopologyListener, To
      * @return
      */
     public List<SwitchNode> getSwitchLinks(){
-        log.info("交换机拓扑获取---------------------->>>");
+//        log.info("交换机拓扑获取---------------------->>>");
         Map<DatapathId, Set<Link>> switchLinks = iLinkDiscoveryService.getSwitchLinks();
         List<SwitchNode> res=new ArrayList<>();
         switchLinks.forEach(((datapathId, links) -> {

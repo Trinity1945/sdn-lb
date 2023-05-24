@@ -81,7 +81,7 @@ public class DeviceMonitor implements IFloodlightModule , DeviceMonitorService {
     }
 
     public Collection<? extends IDevice> getAllDevice() {
-        log.info("Device---------------------->>>");
+//        log.info("Device---------------------->>>");
         iStatisticsService.collectStatistics(true);
         return deviceService.getAllDevices();
     }

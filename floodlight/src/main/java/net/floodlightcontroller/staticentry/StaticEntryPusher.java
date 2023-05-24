@@ -16,28 +16,8 @@
 
 package net.floodlightcontroller.staticentry;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
-import net.floodlightcontroller.core.FloodlightContext;
-import net.floodlightcontroller.core.HAListenerTypeMarker;
-import net.floodlightcontroller.core.IFloodlightProviderService;
-import net.floodlightcontroller.core.IHAListener;
-import net.floodlightcontroller.core.IOFMessageListener;
-import net.floodlightcontroller.core.IOFSwitch;
-import net.floodlightcontroller.core.IOFSwitchListener;
-import net.floodlightcontroller.core.PortChangeType;
+import com.google.common.collect.ImmutableSet;
+import net.floodlightcontroller.core.*;
 import net.floodlightcontroller.core.internal.IOFSwitchService;
 import net.floodlightcontroller.core.module.FloodlightModuleContext;
 import net.floodlightcontroller.core.module.FloodlightModuleException;
@@ -52,23 +32,8 @@ import net.floodlightcontroller.storage.IResultSet;
 import net.floodlightcontroller.storage.IStorageSourceListener;
 import net.floodlightcontroller.storage.IStorageSourceService;
 import net.floodlightcontroller.storage.StorageException;
-import net.floodlightcontroller.util.ActionUtils;
-import net.floodlightcontroller.util.FlowModUtils;
-import net.floodlightcontroller.util.GroupUtils;
-import net.floodlightcontroller.util.InstructionUtils;
-import net.floodlightcontroller.util.MatchUtils;
-
-import org.projectfloodlight.openflow.protocol.OFFactories;
-import org.projectfloodlight.openflow.protocol.OFFlowAdd;
-import org.projectfloodlight.openflow.protocol.OFFlowMod;
-import org.projectfloodlight.openflow.protocol.OFFlowRemoved;
-import org.projectfloodlight.openflow.protocol.OFFlowRemovedReason;
-import org.projectfloodlight.openflow.protocol.OFGroupMod;
-import org.projectfloodlight.openflow.protocol.OFInstructionType;
-import org.projectfloodlight.openflow.protocol.OFPortDesc;
-import org.projectfloodlight.openflow.protocol.OFMessage;
-import org.projectfloodlight.openflow.protocol.OFType;
-import org.projectfloodlight.openflow.protocol.OFVersion;
+import net.floodlightcontroller.util.*;
+import org.projectfloodlight.openflow.protocol.*;
 import org.projectfloodlight.openflow.protocol.match.MatchFields;
 import org.projectfloodlight.openflow.types.DatapathId;
 import org.projectfloodlight.openflow.types.TableId;
@@ -77,7 +42,10 @@ import org.projectfloodlight.openflow.types.U64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableSet;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * This module is responsible for maintaining a set of static flows on
@@ -680,63 +648,64 @@ implements IOFSwitchListener, IFloodlightModule, IStaticEntryPusherService, ISto
 	 * @return Whether to continue processing this message.
 	 */
 	public Command handleFlowRemoved(IOFSwitch sw, OFFlowRemoved msg, FloodlightContext cntx) {
-		U64 cookie = msg.getCookie();
+			U64 cookie = msg.getCookie();
 
-		if (AppCookie.extractApp(cookie) == STATIC_ENTRY_APP_ID) {
-			OFFlowRemovedReason reason = null;
-			reason = msg.getReason();
-			if (reason != null) {
-				if (OFFlowRemovedReason.DELETE == reason) {
-					log.debug("Received flow_removed message for a infinite " + 
-							"timeout flow from switch {}. Removing it from the SFP DB", msg, sw);
-				} else if (OFFlowRemovedReason.HARD_TIMEOUT == reason || OFFlowRemovedReason.IDLE_TIMEOUT == reason) {
-					/* Remove the Flow from the DB since it timed out */
-					log.debug("Received an IDLE or HARD timeout for an SFP flow. Removing it from the SFP DB");
-				} else {
-					log.debug("Received flow_removed message for reason {}. Removing it from the SFP DB", reason);
-				}
-				/* 
-				 * Lookup the flow based on the flow contents. We do not know/care about the name of the 
-				 * flow based on this message, but we can get the table values for this switch and search.
-				 */
-				String flowToRemove = null;
-				Map<String, OFMessage> flowsByName = getEntries(sw.getId())
-						.entrySet()
-						.stream()
-						.filter(e -> e.getValue() instanceof OFFlowMod)
-						.collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-
-				for (Map.Entry<String, OFMessage> e : flowsByName.entrySet()) {
-					OFFlowMod f = (OFFlowMod) e.getValue();
-					if (msg.getCookie().equals(f.getCookie()) &&
-							(msg.getVersion().compareTo(OFVersion.OF_12) < 0 ? true : msg.getHardTimeout() == f.getHardTimeout()) &&
-							msg.getIdleTimeout() == f.getIdleTimeout() &&
-							msg.getMatch().equals(f.getMatch()) &&
-							msg.getPriority() == f.getPriority() &&
-							(msg.getVersion().compareTo(OFVersion.OF_10) == 0 ? true : msg.getTableId().equals(f.getTableId()))
-							) {
-						flowToRemove = e.getKey();
-						break;
+			if (AppCookie.extractApp(cookie) == STATIC_ENTRY_APP_ID) {
+				OFFlowRemovedReason reason = null;
+				reason = msg.getReason();
+				if (reason != null) {
+					if (OFFlowRemovedReason.DELETE == reason) {
+						log.debug("Received flow_removed message for a infinite " +
+								"timeout flow from switch {}. Removing it from the SFP DB", msg, sw);
+					} else if (OFFlowRemovedReason.HARD_TIMEOUT == reason || OFFlowRemovedReason.IDLE_TIMEOUT == reason) {
+						/* Remove the Flow from the DB since it timed out */
+						log.debug("Received an IDLE or HARD timeout for an SFP flow. Removing it from the SFP DB");
+					} else {
+						log.debug("Received flow_removed message for reason {}. Removing it from the SFP DB", reason);
 					}
-				}
+					/*
+					 * Lookup the flow based on the flow contents. We do not know/care about the name of the
+					 * flow based on this message, but we can get the table values for this switch and search.
+					 */
+					String flowToRemove = null;
+					Map<String, OFMessage> flowsByName = getEntries(sw.getId())
+							.entrySet()
+							.stream()
+							.filter(e -> e.getValue() instanceof OFFlowMod)
+							.collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
 
-				/*
-				 * Remove the flow. This will send the delete message to the switch,
-				 * since we cannot tell the storage listener rowsdeleted() that we
-				 * are only removing our local DB copy of the flow and that it actually
-				 * timed out on the switch and is already gone. The switch will silently
-				 * discard the delete message in this case.
-				 * 
-				 * TODO: We should come up with a way to convey to the storage listener
-				 * the reason for the flow being removed.
-				 */
-				if (flowToRemove != null) {
-					log.warn("Removing flow {} for reason {}", flowToRemove, reason);
-					deleteEntry(flowToRemove);
-				}
+					for (Map.Entry<String, OFMessage> e : flowsByName.entrySet()) {
+						OFFlowMod f = (OFFlowMod) e.getValue();
+						if (msg.getCookie().equals(f.getCookie()) &&
+								(msg.getVersion().compareTo(OFVersion.OF_12) < 0 ? true : msg.getHardTimeout() == f.getHardTimeout()) &&
+								msg.getIdleTimeout() == f.getIdleTimeout() &&
+								msg.getMatch().equals(f.getMatch()) &&
+								msg.getPriority() == f.getPriority() &&
+								(msg.getVersion().compareTo(OFVersion.OF_10) == 0 ? true : msg.getTableId().equals(f.getTableId()))
+						) {
+							flowToRemove = e.getKey();
+							break;
+						}
 
-				/* Stop the processing chain since we sent or asked for the delete message. */
-				return Command.STOP;
+
+					/*
+					 * Remove the flow. This will send the delete message to the switch,
+					 * since we cannot tell the storage listener rowsdeleted() that we
+					 * are only removing our local DB copy of the flow and that it actually
+					 * timed out on the switch and is already gone. The switch will silently
+					 * discard the delete message in this case.
+					 *
+					 * TODO: We should come up with a way to convey to the storage listener
+					 * the reason for the flow being removed.
+					 */
+					if (flowToRemove != null) {
+						log.warn("Removing flow {} for reason {}", flowToRemove, reason);
+						deleteEntry(flowToRemove);
+					}
+
+					/* Stop the processing chain since we sent or asked for the delete message. */
+					return Command.STOP;
+				}
 			}
 		}
 		/* Continue the processing chain, since we did not send the delete. */
