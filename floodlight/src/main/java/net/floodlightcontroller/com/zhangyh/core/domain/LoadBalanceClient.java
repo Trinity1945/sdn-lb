@@ -29,11 +29,11 @@ public class LoadBalanceClient {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LoadBalanceClient that = (LoadBalanceClient) o;
-        return Objects.equals(client, that.client) && Objects.equals(sw, that.sw) && Objects.equals(pi, that.pi);
+        return Objects.equals(client, that.client) && Objects.equals(sw, that.sw);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(client, sw, pi);
+        return Objects.hash(client, sw);
     }
 }

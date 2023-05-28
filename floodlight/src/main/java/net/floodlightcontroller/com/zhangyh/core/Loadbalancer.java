@@ -100,17 +100,18 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
     private static final Integer TIME_OUT = 5;
 
     private Set<LoadBalanceClient> loadBalanceClients;
+    private Set<OFPacketIn> packetIns;
 
     @Override
     public Collection<Class<? extends IFloodlightService>> getModuleServices() {
-        Collection<Class<? extends IFloodlightService>> l = new ArrayList<Class<? extends IFloodlightService>>();
+        Collection<Class<? extends IFloodlightService>> l = new ArrayList<>();
         l.add(LoadBalanceService.class);
         return l;
     }
 
     @Override
     public Map<Class<? extends IFloodlightService>, IFloodlightService> getServiceImpls() {
-        Map<Class<? extends IFloodlightService>, IFloodlightService> m = new HashMap<Class<? extends IFloodlightService>, IFloodlightService>();
+        Map<Class<? extends IFloodlightService>, IFloodlightService> m = new HashMap<>();
         m.put(LoadBalanceService.class, this);
         return m;
     }
@@ -149,6 +150,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
         topoInstence = new CopyOnWriteArrayList<>();
         graph = new ConcurrentHashMap<>();
         pathcache = new ConcurrentHashMap<>();
+        packetIns = new CopyOnWriteArraySet<>();
         loadBalanceClients = new CopyOnWriteArraySet<>();
     }
 
@@ -158,14 +160,14 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
         debugCounterService.registerModule(this.getName());
         counterPacketOut = debugCounterService.registerCounter(this.getName(), "packet-outs-written", "Packet outs written by the LoadBalancer", IDebugCounterService.MetaData.WARN);
         counterPacketIn = debugCounterService.registerCounter(this.getName(), "packet-ins-received", "Packet ins received by the LoadBalancer", IDebugCounterService.MetaData.WARN);
-        int portStatsInterval = 60;
+        int portStatsInterval = 10;
         int loadBalanceStatsInterval = 10;
         threadService
                 .getScheduledExecutor()
                 .scheduleAtFixedRate(this::clearCache, portStatsInterval, portStatsInterval, TimeUnit.SECONDS);
-        threadService
-                .getScheduledExecutor()
-                .scheduleAtFixedRate(this::loadbalance, loadBalanceStatsInterval, loadBalanceStatsInterval, TimeUnit.SECONDS);
+//        threadService
+//                .getScheduledExecutor()
+//                .scheduleAtFixedRate(this::loadbalance, loadBalanceStatsInterval, loadBalanceStatsInterval, TimeUnit.SECONDS);
         addRestletRoutable();
     }
 
@@ -180,8 +182,11 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
     public void loadbalance() {
         log.info("任务调度中");
         if (enableLoadBalance) {
-            log.info("负载均衡中:{}",loadBalanceClients.size());
+            log.info("负载均衡中:{}", loadBalanceClients.size());
+            log.info("Package In Numbenr:{}", packetIns.size());
             loadBalanceClients.forEach(client -> {
+                log.info("负载起点=={}-端口{}---负载终点=={}-端口{}", client.getClient().getIpAddress(), client.getClient().getSrcPort(),
+                        client.getClient().getTargetIpAddress(), client.getClient().getTargetPort());
                 doLoadBalance(client.getClient(), client.getSw(), client.getPi());
             });
         }
@@ -241,18 +246,15 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                 client.setSrcPort(TransportPort.of(8));
                 client.setTargetPort(TransportPort.of(0));
             }
-            if (statisticsService != null&&enableLoadBalance) {
+            if (statisticsService != null && enableLoadBalance) {
                 statisticsService.collectStatistics(true);
             }
             if (enableLoadBalance) {
                 LoadBalanceClient loadBalanceClient = new LoadBalanceClient(client, sw, pi);
                 loadBalanceClients.add(loadBalanceClient);
+                packetIns.add(pi);
+                loadbalance();
             }
-//            IDevice dstDevice = IDeviceService.fcStore.get(cntx, IDeviceService.CONTEXT_DST_DEVICE);
-//            IDevice srcDevice = IDeviceService.fcStore.get(cntx, IDeviceService.CONTEXT_SRC_DEVICE);
-//            if(enableLoadBalance){
-//                doLoadBalance(client,sw,pi);
-//            }
         }
         return Command.CONTINUE;
     }
@@ -288,8 +290,8 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
         }
 
         if (srcDevice == null || dstDevice == null) return;
-//        log.info("源设备：{}", JSON.toJSONString(srcDevice.getIPv4Addresses()));
-//        log.info("目标设备：{}", JSON.toJSONString(dstDevice.getIPv4Addresses()));
+        log.info("源设备：{}", JSON.toJSONString(srcDevice.getIPv4Addresses()));
+        log.info("目标设备：{}", JSON.toJSONString(dstDevice.getIPv4Addresses()));
         //获取设备所在集群
         DatapathId srcIsland = topologyService.getClusterId(sw.getId());
 
@@ -306,9 +308,11 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
             DatapathId dstSwDpid = dstDap.getNodeId();
             DatapathId dstIsland = topologyService.getClusterId(dstSwDpid);
             if ((dstIsland != null) && dstIsland.equals(srcIsland)) {
+                log.info("on same island");
                 on_same_island = true;
                 if ((sw.getId().equals(dstSwDpid)) && OFMessageUtils.getInPort(pi).equals(dstDap.getPortId())) {
                     on_same_if = true;
+                    log.info("on_same_if");
                 }
                 break;
             }
@@ -336,7 +340,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
         SwitchPort[] dstDaps = dstDevice.getAttachmentPoints();
         Arrays.sort(dstDaps, clusterIdComparator);
 
-
+        log.info("开始计算最佳路径-----------------------》》》");
         int iSrcDaps = 0, iDstDaps = 0;
         while ((iSrcDaps < srcDaps.length) && (iDstDaps < dstDaps.length)) {
             SwitchPort srcDap = srcDaps[iSrcDaps];
@@ -350,6 +354,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                 if (!srcDap.equals(dstDap) &&
                         (srcCluster != null) &&
                         (dstCluster != null)) {
+                    log.info("迭代路径中。。。。。。。。。。。。");
                     //最佳路径获取
                     Path routeIn = getPath(srcDap.getNodeId(),
                             srcDap.getPortId(),
@@ -361,6 +366,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                             srcDap.getPortId());
 
                     if (!routeIn.getPath().isEmpty()) {
+                        log.info("蚁群增强算法入路径");
                         log.info("起点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
                         log.info("终点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
                         routeIn.getPath().forEach(e -> {
@@ -368,21 +374,13 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                         });
                         pushStaticRoute(true, routeIn, client, sw);
                     } else {
-                        log.info("容错迪杰斯特拉算法");
+                        log.info("迪杰斯特拉算法容错");
                         routeIn =
                                 routingEngineService.getPath(srcDap.getNodeId(),
                                         srcDap.getPortId(),
                                         dstDap.getNodeId(),
                                         dstDap.getPortId());
-                        PathId pathId = new PathId(srcDap.getNodeId(), dstDap.getNodeId());
-                        List<Path> paths = pathcache.get(pathId);
-                        if (paths == null || paths.size() == 0) {
-                            List<Path> path = new ArrayList<>();
-                            path.add(routeIn);
-                            pathcache.put(pathId, path);
-                        } else {
-                            paths.add(routeIn);
-                        }
+
                         if (!routeIn.getPath().isEmpty()) {
                             log.info("起点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
                             log.info("终点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
@@ -390,10 +388,27 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                                 log.info("ACO入路由：{}====入端口：{}", e.getNodeId().toString(), e.getPortId());
                             });
                             pushStaticRoute(true, routeIn, client, sw);
+                            PathId pathId = new PathId(srcDap.getNodeId(), dstDap.getNodeId());
+                            List<Path> paths = pathcache.get(pathId);
+                            if (paths == null || paths.size() == 0) {
+                                List<Path> path = new ArrayList<>();
+                                routeIn.getPath().remove(0);
+                                routeIn.getPath().remove(routeIn.getPath().size() - 1);
+                                path.add(routeIn);
+                                pathcache.put(pathId, path);
+                            }else{
+                                paths.clear();
+                                List<Path> path = new ArrayList<>();
+                                routeIn.getPath().remove(0);
+                                routeIn.getPath().remove(routeIn.getPath().size() - 1);
+                                path.add(routeIn);
+                                pathcache.put(pathId, path);
+                            }
                         }
                     }
                     log.info("---------------------------------------------------------------------------------");
                     if (!routeOut.getPath().isEmpty()) {
+                        log.info("蚁群增强算法出路径");
                         pushStaticRoute(false, routeOut, client, sw);
                         log.info("起点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
                         log.info("终点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
@@ -401,28 +416,35 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                             log.info("ACO出路由：{}~~~~出端口：{}", e.getNodeId().toString(), e.getPortId());
                         });
                     } else {
-                        log.info("容错迪杰斯特拉算法");
+                        log.info("迪杰斯特拉算法容错");
                         routeOut =
                                 routingEngineService.getPath(dstDap.getNodeId(),
                                         dstDap.getPortId(),
                                         srcDap.getNodeId(),
                                         srcDap.getPortId());
-                        PathId pathId = new PathId(dstDap.getNodeId(), srcDap.getNodeId());
-                        List<Path> paths = pathcache.get(pathId);
-                        if (paths == null || paths.size() == 0) {
-                            List<Path> path = new ArrayList<>();
-                            path.add(routeOut);
-                            pathcache.put(pathId, path);
-                        } else {
-                            paths.add(routeOut);
-                        }
                         if (!routeOut.getPath().isEmpty()) {
-                            pushStaticRoute(false, routeOut, client, sw);
                             log.info("起点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
                             log.info("终点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
                             routeOut.getPath().forEach(e -> {
                                 log.info("ACO出路由：{}~~~~出端口：{}", e.getNodeId().toString(), e.getPortId());
                             });
+                            pushStaticRoute(false, routeOut, client, sw);
+                            PathId pathId = new PathId(dstDap.getNodeId(), srcDap.getNodeId());
+                            List<Path> paths = pathcache.get(pathId);
+                            if (paths == null || paths.size() == 0) {
+                                List<Path> path = new ArrayList<>();
+                                routeOut.getPath().remove(0);
+                                routeOut.getPath().remove(routeOut.getPath().size() - 1);
+                                path.add(routeOut);
+                                pathcache.put(pathId, path);
+                            }else{
+                                paths.clear();
+                                List<Path> path = new ArrayList<>();
+                                routeOut.getPath().remove(0);
+                                routeOut.getPath().remove(routeIn.getPath().size() - 1);
+                                path.add(routeOut);
+                                pathcache.put(pathId, path);
+                            }
                         }
                     }
                 }
@@ -434,6 +456,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                 iDstDaps++;
             }
         }
+        log.debug("最佳路径计算完毕-----------------------》》》");
         return;
     }
 
@@ -548,7 +571,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
             return r;
         }
 
-        List<NodePortTuple> nptList = new ArrayList<NodePortTuple>(r.getPath());
+        List<NodePortTuple> nptList = new ArrayList<>(r.getPath());
         NodePortTuple npt = new NodePortTuple(srcId, srcPort);
         //添加起点
         nptList.add(0, npt);
@@ -557,19 +580,19 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
         nptList.add(npt);
 
         PathId id = new PathId(srcId, dstId);
-        r = new Path(id, nptList);
+        Path resPath = new Path(id, nptList);
         List<Path> paths = pathcache.get(id);
         if (paths == null || paths.size() == 0) {
             List<Path> path = new ArrayList<>();
             path.add(r);
             pathcache.put(id, path);
-        } else {
-            paths.add(r);
+        }else{
+            paths.clear();
+            List<Path> path = new ArrayList<>();
+            path.add(r);
+            pathcache.put(id, path);
         }
-//        r.getPath().forEach(e -> {
-//            log.info("ACO路由：{}====入端口：{}", e.getNodeId().toString(), e.getPortId());
-//        });
-        return r;
+        return resPath;
     }
 
     /**
@@ -595,12 +618,8 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
         } catch (Exception e) {
             log.warn("Could not find route from {} to {}. If the path exists, wait for the topology to settle, and it will be detected", srcId, dstId);
         }
-        if (result == null) {
-//            log.info("解空间：{}",JSON.toJSONString(graph));
+        if (result == null || result.getPath().size() == 0) {
             result = computeOrderedPaths(srcId, dstId);
-        }else{
-            result.getPath().remove(0);
-            result.getPath().remove(result.getPath().size()-1);
         }
         //获取拓扑结构
         if (log.isTraceEnabled()) {
@@ -668,12 +687,12 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
      * 计算最佳路径
      */
     private Path computeOrderedPaths(DatapathId startSwitch, DatapathId endSwitch) {
-        AntColonyOptimization aco = new AntColonyOptimization(6, 1.0, 2.0, 0.3, 8.0, 50, 10.0);
+        AntColonyOptimization aco = new AntColonyOptimization(6, 1.0, 2.0, 0.3, 8.0, 10, 10.0);
         List<String> pathString = aco.shortestPath(startSwitch.toString(), endSwitch.toString(), graph);
         if (pathString != null && pathString.size() > 0) {
-            log.info("起点：{}到终点：{}----最佳路径：{}", startSwitch.toString(),endSwitch.toString(),JSON.toJSONString(pathString));
+            log.info("起点：{}到终点：{}----最佳路径：{}", startSwitch.toString(), endSwitch.toString(), JSON.toJSONString(pathString));
         } else {
-            log.warn("起点：{}到终点：{}----最佳路径迭代失败！！！",startSwitch.toString(),endSwitch.toString());
+            log.warn("起点：{}到终点：{}----最佳路径迭代失败！！！", startSwitch.toString(), endSwitch.toString());
         }
         //转化为Path
         PathId pathId = new PathId(startSwitch, endSwitch);
