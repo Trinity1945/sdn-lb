@@ -95,6 +95,8 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
 
     private static final Integer TIME_OUT = 5;
 
+    private static final Long LOADBALANCE_TIME_OUT=2L;
+
     private Set<LoadBalanceClient> loadBalanceClients;
     private Set<OFPacketIn> packetIns;
 
@@ -156,18 +158,18 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
         debugCounterService.registerModule(this.getName());
         counterPacketOut = debugCounterService.registerCounter(this.getName(), "packet-outs-written", "Packet outs written by the LoadBalancer", IDebugCounterService.MetaData.WARN);
         counterPacketIn = debugCounterService.registerCounter(this.getName(), "packet-ins-received", "Packet ins received by the LoadBalancer", IDebugCounterService.MetaData.WARN);
-        int portStatsInterval = 10;
+        int portStatsInterval = 5;
         int loadBalanceStatsInterval = 5;
         threadService
                 .getScheduledExecutor()
-                .scheduleAtFixedRate(this::clearCache, portStatsInterval, portStatsInterval, TimeUnit.SECONDS);
+                .scheduleAtFixedRate(this::buildTopology, portStatsInterval, portStatsInterval, TimeUnit.SECONDS);
         threadService
                 .getScheduledExecutor()
                 .scheduleAtFixedRate(this::loadbalance, loadBalanceStatsInterval, loadBalanceStatsInterval, TimeUnit.SECONDS);
         addRestletRoutable();
     }
 
-    public void clearCache() {
+    public void buildTopology() {
         log.info("拓扑构建--------------------------------------》");
         Map<DatapathId, Set<Link>> topologyLinks = iLinkDiscoveryService.getSwitchLinks();
         buildGraph(topologyLinks);
@@ -192,8 +194,6 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
     private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     public void loadbalance() {
-        // 设置超时时间为10秒
-        long timeout = 2;
         TimeUnit timeUnit = TimeUnit.SECONDS;
 
         log.info("任务调度中");
@@ -201,12 +201,9 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
             log.info("负载均衡中:{}", loadBalanceClients.size());
             log.info("Package In Numbenr:{}", packetIns.size());
             loadBalanceClients.forEach(client -> {
-//                log.info("负载起点=={}-端口{}---负载终点=={}-端口{}", client.getClient().getIpAddress(), client.getClient().getSrcPort(),
-//                        client.getClient().getTargetIpAddress(), client.getClient().getTargetPort());
-                // 将任务添加到ScheduledExecutorService中
                 ScheduledFuture<?> future = executor.schedule(() -> {
                     doLoadBalance(client.getClient(), client.getSw(), client.getPi());
-                }, timeout, timeUnit);
+                }, LOADBALANCE_TIME_OUT, timeUnit);
 
                 try {
                     // 等待任务完成或超时
@@ -280,7 +277,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                 client.setSrcPort(TransportPort.of(8));
                 client.setTargetPort(TransportPort.of(0));
             }
-            if (statisticsService != null && enableLoadBalance) {
+            if (statisticsService != null&&enableLoadBalance) {
                 statisticsService.collectStatistics(true);
             }
             if (enableLoadBalance) {
@@ -341,11 +338,9 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
             DatapathId dstSwDpid = dstDap.getNodeId();
             DatapathId dstIsland = topologyService.getClusterId(dstSwDpid);
             if ((dstIsland != null) && dstIsland.equals(srcIsland)) {
-//                log.info("on same island");
                 on_same_island = true;
                 if ((sw.getId().equals(dstSwDpid)) && OFMessageUtils.getInPort(pi).equals(dstDap.getPortId())) {
                     on_same_if = true;
-//                    log.info("on_same_if");
                 }
                 break;
             }
@@ -387,7 +382,6 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                 if (!srcDap.equals(dstDap) &&
                         (srcCluster != null) &&
                         (dstCluster != null)) {
-//                    log.info("迭代路径中。。。。。。。。。。。。");
                     //最佳路径获取
                     Path routeIn = getPath(srcDap.getNodeId(),
                             srcDap.getPortId(),
@@ -475,7 +469,6 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                 iDstDaps++;
             }
         }
-//        log.debug("最佳路径计算完毕-----------------------》》》");
         return;
     }
 
@@ -648,6 +641,9 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
      * @param topologyLinks
      */
     private void buildGraph(Map<DatapathId, Set<Link>> topologyLinks) {
+        if(topoInstence!=null){
+            topoInstence.clear();
+        }
         topologyLinks.forEach(((dataPathId, links) -> {
             SwitchNode topology = new SwitchNode();
             topology.setSwitchDPID(dataPathId.toString());
@@ -672,7 +668,9 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
             });
             topoInstence.add(topology);
         }));
-        if (topoInstence != null) {
+        if(graph!=null){
+            graph.clear();
+        }
             //构建解空间
             topoInstence.forEach(topology -> {
                 graph.put(topology.getSwitchDPID(), new ArrayList<>());
@@ -694,7 +692,6 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                     });
                 }
             });
-        }
     }
 
     /**
