@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Random;
 
 @SpringBootTest
 class FasLbLoadbalancerApplicationTests {
@@ -16,7 +17,9 @@ class FasLbLoadbalancerApplicationTests {
 
     @Test
     void contextLoads() {
-
+        Random random = new Random();
+        double rand = random.nextDouble();
+        System.out.println(rand);
     }
 
     @Test

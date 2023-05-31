@@ -115,7 +115,7 @@ public class AntColonyOptimization {
                 if (ant.path.get(ant.path.size() - 1).equals(end) && ant.latency < bestLatency) {
                     bestPath = ant.path;
                     bestLatency = ant.latency;
-                    log.info("迭代第{}次；本次迭代最佳路径为：{}",iterations,JSON.toJSONString(bestPath));
+                    log.info("ACO Iteration {} th time; The best path of this iteration is: {}",iterations,JSON.toJSONString(bestPath));
                 }
             }
         }

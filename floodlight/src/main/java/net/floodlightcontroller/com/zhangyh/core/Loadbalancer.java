@@ -170,36 +170,20 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
     }
 
     public void buildTopology() {
-        log.info("拓扑构建--------------------------------------》");
+        log.info("Topology construction--------------------------------------》");
         Map<DatapathId, Set<Link>> topologyLinks = iLinkDiscoveryService.getSwitchLinks();
         buildGraph(topologyLinks);
     }
-
-//    public void loadbalance() {
-//        log.info("任务调度中");
-//        if (enableLoadBalance) {
-//            log.info("负载均衡中:{}", loadBalanceClients.size());
-//            log.info("Package In Numbenr:{}", packetIns.size());
-//            loadBalanceClients.forEach(client -> {
-//                log.info("负载起点=={}-端口{}---负载终点=={}-端口{}", client.getClient().getIpAddress(), client.getClient().getSrcPort(),
-//                        client.getClient().getTargetIpAddress(), client.getClient().getTargetPort());
-//                doLoadBalance(client.getClient(), client.getSw(), client.getPi());
-//            });
-//        }
-//        pathcache.clear();
-//        loadBalanceClients.clear();
-//        log.info("调度结束");
-//    }
 
     private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     public void loadbalance() {
         TimeUnit timeUnit = TimeUnit.SECONDS;
 
-        log.info("任务调度中");
+        log.info("Task scheduling......");
         if (enableLoadBalance) {
-            log.info("负载均衡中:{}", loadBalanceClients.size());
-            log.info("Package In Numbenr:{}", packetIns.size());
+            log.info("Number of load balancing clients:{}", loadBalanceClients.size());
+            log.info("Package In Number:{}", packetIns.size());
             loadBalanceClients.forEach(client -> {
                 ScheduledFuture<?> future = executor.schedule(() -> {
                     doLoadBalance(client.getClient(), client.getSw(), client.getPi());
@@ -218,7 +202,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
         pathcache.clear();
         packetIns.clear();
         loadBalanceClients.clear();
-        log.info("调度结束");
+        log.info("End of task scheduling");
     }
 
     public void shutdown() {
@@ -320,13 +304,12 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
         }
 
         if (srcDevice == null || dstDevice == null) return;
-//        log.info("源设备：{}", JSON.toJSONString(srcDevice.getIPv4Addresses()));
-//        log.info("目标设备：{}", JSON.toJSONString(dstDevice.getIPv4Addresses()));
+
         //获取设备所在集群
         DatapathId srcIsland = topologyService.getClusterId(sw.getId());
 
         if (srcIsland == null) {
-            log.debug("没有找到openflow集群 {}/{}",
+            log.debug("No openflow island found for source {}/{}",
                     sw.getId().toString(), pi.getInPort());
             return;
         }
@@ -368,7 +351,6 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
         SwitchPort[] dstDaps = dstDevice.getAttachmentPoints();
         Arrays.sort(dstDaps, clusterIdComparator);
 
-//        log.info("开始计算最佳路径-----------------------》》》");
         int iSrcDaps = 0, iDstDaps = 0;
         while ((iSrcDaps < srcDaps.length) && (iDstDaps < dstDaps.length)) {
             SwitchPort srcDap = srcDaps[iSrcDaps];
@@ -393,15 +375,15 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                             srcDap.getPortId());
 
                     if (!routeIn.getPath().isEmpty()) {
-//                        log.info("蚁群增强算法入路径");
-//                        log.info("起点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
-//                        log.info("终点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
+//                        log.info("Ant colony enhancement algorithm into the path");
+//                        log.info("Starting point：{}，port：{}", srcDap.getNodeId(), srcDap.getPortId());
+//                        log.info("End point：{}，port：{}", dstDap.getNodeId(), dstDap.getPortId());
 //                        routeIn.getPath().forEach(e -> {
-//                            log.info("ACO入路由：{}====入端口：{}", e.getNodeId().toString(), e.getPortId());
+//                            log.info("ACO inbound routing：{}====Incoming port：{}", e.getNodeId().toString(), e.getPortId());
 //                        });
                         pushStaticRoute(true, routeIn, client, sw);
                     } else {
-//                        log.info("迪杰斯特拉算法容错");
+//                        log.info("Dijkstra algorithm is fault-tolerant");
                         routeIn =
                                 routingEngineService.getPath(srcDap.getNodeId(),
                                         srcDap.getPortId(),
@@ -409,10 +391,10 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                                         dstDap.getPortId());
 
                         if (!routeIn.getPath().isEmpty()) {
-//                            log.info("起点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
-//                            log.info("终点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
+//                            log.info("Starting point：{}，port：{}", srcDap.getNodeId(), srcDap.getPortId());
+//                            log.info("End point：{}，port：{}", dstDap.getNodeId(), dstDap.getPortId());
 //                            routeIn.getPath().forEach(e -> {
-//                                log.info("ACO入路由：{}====入端口：{}", e.getNodeId().toString(), e.getPortId());
+//                                log.info("Dijkstra inbound routing：{}====Incoming port：{}", e.getNodeId().toString(), e.getPortId());
 //                            });
                             pushStaticRoute(true, routeIn, client, sw);
                             PathId pathId = new PathId(srcDap.getNodeId(), dstDap.getNodeId());
@@ -428,25 +410,25 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                     }
 //                    log.info("---------------------------------------------------------------------------------");
                     if (!routeOut.getPath().isEmpty()) {
-//                        log.info("蚁群增强算法出路径");
+//                        log.info("Ant colony enhancement algorithm into the path");
                         pushStaticRoute(false, routeOut, client, sw);
-//                        log.info("起点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
-//                        log.info("终点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
+//                        log.info("Starting point：{}，port：{}", dstDap.getNodeId(), dstDap.getPortId());
+//                        log.info("End point：{}，port：{}", srcDap.getNodeId(), srcDap.getPortId());
 //                        routeOut.getPath().forEach(e -> {
-//                            log.info("ACO出路由：{}~~~~出端口：{}", e.getNodeId().toString(), e.getPortId());
+//                            log.info("ACO route：{}~~~~Outgoing port：{}", e.getNodeId().toString(), e.getPortId());
 //                        });
                     } else {
-//                        log.info("迪杰斯特拉算法容错");
+//                        log.info("Dijkstra algorithm is fault-tolerant");
                         routeOut =
                                 routingEngineService.getPath(dstDap.getNodeId(),
                                         dstDap.getPortId(),
                                         srcDap.getNodeId(),
                                         srcDap.getPortId());
                         if (!routeOut.getPath().isEmpty()) {
-//                            log.info("起点：{}，端口：{}", dstDap.getNodeId(), dstDap.getPortId());
-//                            log.info("终点：{}，端口：{}", srcDap.getNodeId(), srcDap.getPortId());
+//                            log.info("Starting point：{}，port：{}", dstDap.getNodeId(), dstDap.getPortId());
+//                            log.info("End point：{}，port：{}", srcDap.getNodeId(), srcDap.getPortId());
 //                            routeOut.getPath().forEach(e -> {
-//                                log.info("ACO出路由：{}~~~~出端口：{}", e.getNodeId().toString(), e.getPortId());
+//                                log.info("Dijkstra route：{}~~~~Outgoing port：{}", e.getNodeId().toString(), e.getPortId());
 //                            });
                             pushStaticRoute(false, routeOut, client, sw);
                             PathId pathId = new PathId(dstDap.getNodeId(), srcDap.getNodeId());
@@ -511,7 +493,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                     } else if (client.getNw_proto().equals(IpProtocol.ICMP)) {
 
                     } else {
-                        log.error("未知IP协议 {} 在推送静态路由时.", client.getNw_proto());
+                        log.error("Unknown IpProtocol {} detected during inbound static VIP route push.", client.getNw_proto());
                     }
 
                     if (sw.equals(pinSwitch.getId())) {
@@ -520,7 +502,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                         try {
                             actions.add(switchService.getSwitch(path.get(i + 1).getNodeId()).getOFFactory().actions().output(path.get(i + 1).getPortId(), Integer.MAX_VALUE));
                         } catch (NullPointerException e) {
-                            log.error("无法向离线交换机安装负载均衡器流表规则 {}.", path.get(i + 1).getNodeId());
+                            log.error("Fail to install loadbalancer flow rules to offline switch {}.", path.get(i + 1).getNodeId());
                         }
                     }
 
@@ -542,7 +524,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                     } else if (client.getNw_proto().equals(IpProtocol.ICMP)) {
 
                     } else {
-                        log.error("未知IP协议 {} 在推送静态路由时.", client.getNw_proto());
+                        log.error("Unknown IpProtocol {} detected during inbound static VIP route push.", client.getNw_proto());
                     }
 
                     if (sw.equals(pinSwitch.getId())) {
@@ -551,7 +533,7 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                         try {
                             actions.add(switchService.getSwitch(path.get(i + 1).getNodeId()).getOFFactory().actions().output(path.get(i + 1).getPortId(), Integer.MAX_VALUE));
                         } catch (NullPointerException e) {
-                            log.error("无法向离线交换机安装负载均衡器流表规则 {}.", path.get(i + 1).getNodeId());
+                            log.error("Fail to install loadbalancer flow rules to offline switch {}.", path.get(i + 1).getNodeId());
                         }
                     }
                 }
@@ -662,7 +644,6 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
                     double rate = (rx + tx) / (double) (speed);
                     DecimalFormat df = new DecimalFormat("#.###");
                     linkInfo.setRate(df.format(rate * 100));
-//                    log.info("设备：{} 带宽利用率：{}", dataPathId, df.format(rate * 100));
                 }
                 topology.getLinks().add(linkInfo);
             });
@@ -701,9 +682,9 @@ public class Loadbalancer implements IFloodlightModule, IOFMessageListener, Load
         AntColonyOptimization aco = new AntColonyOptimization(6, 1.0, 2.0, 0.3, 8.0, 10, 10.0);
         List<String> pathString = aco.shortestPath(startSwitch.toString(), endSwitch.toString(), graph);
 //        if (pathString != null && pathString.size() > 0) {
-//            log.info("起点：{}到终点：{}----最佳路径：{}", startSwitch.toString(), endSwitch.toString(), JSON.toJSONString(pathString));
+//            log.info("Starting point：{}To the end：{}----Optimum path：{}", startSwitch.toString(), endSwitch.toString(), JSON.toJSONString(pathString));
 //        } else {
-//            log.warn("起点：{}到终点：{}----最佳路径迭代失败！！！", startSwitch.toString(), endSwitch.toString());
+//            log.warn("Starting point：{}To the end：{}----Optimal path iteration failed！！！", startSwitch.toString(), endSwitch.toString());
 //        }
         //转化为Path
         PathId pathId = new PathId(startSwitch, endSwitch);
