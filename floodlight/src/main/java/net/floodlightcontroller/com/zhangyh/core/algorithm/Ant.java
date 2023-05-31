@@ -57,7 +57,7 @@ public class Ant {
                 if(neighbor.getRate()==null){
                     neighbor.setRate(0.0);
                 }
-                double distance = (0.7*neighbor.latency)+(neighbor.getRate()*0.3);
+                double distance = ((0.7*neighbor.latency)*1000)+(neighbor.getRate()*0.3);
                 double probability = Math.pow(pheromone, alpha) * Math.pow(1.0 / distance, beta);
                 probabilities.add(new AbstractMap.SimpleEntry<>(neighbor.dstSwitch, probability));
             }
